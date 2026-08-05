@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[linear-gradient(135deg,#F5FAFE_0%,#F5FAFE_48%,#348fe2_48%,#348fe2_100%)]">
+    <div className="fixed inset-0 overflow-hidden bg-[linear-gradient(135deg,#F5FAFE_0%,#F5FAFE_48%,lab(26.1542%_15.7545_-51.5504)_48%,lab(26.1542%_15.7545_-51.5504)_100%)]">
       <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(52,143,226,0.08),transparent_28%),radial-gradient(circle_at_bottom_right,rgba(245,250,254,0.18),transparent_32%)]" />
       {mobileSidebarOpen && (
         <div

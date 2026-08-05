@@ -77,14 +77,13 @@ export default function SignupPage() {
 
   return (
     <div className="relative min-h-screen overflow-hidden bg-[#F5FAFE] text-[#0f172a]">
-      <div className="absolute inset-y-0 left-0 w-1/2 bg-[rgb(2,3,129)]" />
+      <div className="absolute inset-y-0 left-0 w-1/2 bg-blue-900" />
       <div className="absolute inset-y-0 right-0 w-1/2 bg-[#F5FAFE]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(255,255,255,0.42),transparent_36%)]" />
 
       <div className="relative z-10 flex min-h-screen items-center justify-center px-3 py-5 sm:px-6">
-        <div className="w-full max-w-[460px]">
+        <div className="w-full max-w-[540px]">
           <div className="mb-3 flex justify-center">
-            <div className="flex h-40 w-40 items-center justify-center rounded-full bg-white shadow-[0_14px_36px_rgba(2,3,129,0.14)]">
+            <div className="flex h-40 w-40 items-center justify-center rounded-full bg-white shadow-[0_14px_36px_rgba(30,58,138,0.14)]">
               <Image
                 src="/Screenshot_2026-08-04_at_10.38.00-removebg-preview.png"
                 alt="Guardian Bank icon"
@@ -96,18 +95,21 @@ export default function SignupPage() {
             </div>
           </div>
 
-          <div className="flex h-[560px] flex-col overflow-y-auto rounded-[28px] border border-[rgb(2,3,129)]/15 bg-white p-5 shadow-[0_12px_36px_rgba(2,3,129,0.10)] sm:p-6 [&::-webkit-scrollbar]:hidden">
+          <div
+            className="auth-scroll flex flex-col overflow-y-auto rounded-[28px] border border-blue-900/15 bg-white p-5 shadow-[0_12px_36px_rgba(30,58,138,0.10)] sm:p-6"
+            style={{ height: 370 }}
+          >
             <div className="mb-5 text-center">
-              <h1 className="text-[28px] font-bold tracking-tight text-[#0f172a]">
+              <h1 className="text-[36px] font-bold tracking-tight text-[#0f172a]">
                 Create account
               </h1>
-              <p className="mt-2 text-sm text-[#64748b]">
+              <p className="mt-2 text-base text-[#64748b]">
                 Join Guardian Bank securely
               </p>
             </div>
 
             {error && (
-              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-600">
+              <div className="mb-4 rounded-xl border border-red-200 bg-red-50 p-3 text-base text-red-600">
                 {error}
               </div>
             )}
@@ -115,7 +117,7 @@ export default function SignupPage() {
             <form onSubmit={handleSubmit} className="flex grow flex-col space-y-3.5">
               <div className="grid gap-3.5 sm:grid-cols-2">
                 <div>
-                  <label htmlFor="first_name" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                  <label htmlFor="first_name" className="mb-1 block text-base font-medium text-[#0f172a]">
                     First Name
                   </label>
                   <input
@@ -126,11 +128,11 @@ export default function SignupPage() {
                     value={formData.first_name}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                   />
                 </div>
                 <div>
-                  <label htmlFor="last_name" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                  <label htmlFor="last_name" className="mb-1 block text-base font-medium text-[#0f172a]">
                     Last Name
                   </label>
                   <input
@@ -141,13 +143,13 @@ export default function SignupPage() {
                     value={formData.last_name}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                   />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="email" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                <label htmlFor="email" className="mb-1 block text-base font-medium text-[#0f172a]">
                   Email Address
                 </label>
                 <input
@@ -158,12 +160,12 @@ export default function SignupPage() {
                   value={formData.email}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                 />
               </div>
 
               <div>
-                <label htmlFor="password" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                <label htmlFor="password" className="mb-1 block text-base font-medium text-[#0f172a]">
                   Password
                 </label>
                 <div className="relative">
@@ -175,13 +177,13 @@ export default function SignupPage() {
                     value={formData.password}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 pr-10 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 pr-10 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-[rgb(2,3,129)]"
+                    className="absolute right-3 top-3 text-blue-900"
                   >
                     {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -189,7 +191,7 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label htmlFor="confirmPassword" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                <label htmlFor="confirmPassword" className="mb-1 block text-base font-medium text-[#0f172a]">
                   Confirm Password
                 </label>
                 <div className="relative">
@@ -201,13 +203,13 @@ export default function SignupPage() {
                     value={formData.confirmPassword}
                     onChange={handleChange}
                     disabled={isLoading}
-                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 pr-10 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                    className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 pr-10 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                   />
 
                   <button
                     type="button"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-3 text-[rgb(2,3,129)]"
+                    className="absolute right-3 top-3 text-blue-900"
                   >
                     {showConfirmPassword ? <EyeOff size={18} /> : <Eye size={18} />}
                   </button>
@@ -215,7 +217,7 @@ export default function SignupPage() {
               </div>
 
               <div>
-                <label htmlFor="department" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                <label htmlFor="department" className="mb-1 block text-base font-medium text-[#0f172a]">
                   Department
                 </label>
                 <input
@@ -226,12 +228,12 @@ export default function SignupPage() {
                   value={formData.department}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                 />
               </div>
 
               <div>
-                <label htmlFor="phone" className="mb-1 block text-sm font-medium text-[#0f172a]">
+                <label htmlFor="phone" className="mb-1 block text-base font-medium text-[#0f172a]">
                   Phone
                 </label>
                 <input
@@ -242,7 +244,7 @@ export default function SignupPage() {
                   value={formData.phone}
                   onChange={handleChange}
                   disabled={isLoading}
-                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-[#0f172a] placeholder:text-[#64748b] focus:border-[rgb(2,3,129)] focus:outline-none focus:ring-2 focus:ring-[rgb(2,3,129)]/30"
+                  className="w-full rounded-xl border border-[#e2e8f0] bg-white p-3 text-base text-[#0f172a] placeholder:text-[#64748b] focus:border-blue-900 focus:outline-none focus:ring-2 focus:ring-blue-900/30"
                 />
               </div>
 
@@ -250,7 +252,7 @@ export default function SignupPage() {
                 <button
                   type="submit"
                   disabled={isLoading}
-                  className="w-full rounded-xl bg-[rgb(2,3,129)] p-3 font-semibold text-white transition-all duration-300 hover:bg-[#1f2c9d] disabled:cursor-not-allowed disabled:opacity-60"
+                  className="w-full rounded-xl bg-blue-900 p-3 text-lg font-semibold text-white transition-all duration-300 hover:bg-blue-800 disabled:cursor-not-allowed disabled:opacity-90"
                 >
                   {isLoading ? (
                     <span className="inline-flex items-center gap-2">
@@ -264,18 +266,18 @@ export default function SignupPage() {
               </div>
             </form>
 
-            <p className="mt-4 text-center text-sm text-[#64748b]">
+            <p className="mt-4 text-center text-base text-[#64748b]">
               Already have an account?
               <Link
                 href="/auth/login"
-                className="ml-2 font-semibold text-[rgb(2,3,129)] hover:text-[#1f2c9d]"
+                className="ml-2 font-semibold text-blue-900 hover:text-blue-800"
               >
                 Sign In
               </Link>
             </p>
           </div>
 
-          <p className="mt-3 text-center text-xs text-[#64748b]">
+          <p className="mt-3 text-center text-sm text-[#64748b]">
             © {new Date().getFullYear()} Guardian Bank
           </p>
         </div>
