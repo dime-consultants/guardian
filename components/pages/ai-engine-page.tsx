@@ -85,11 +85,11 @@ export function AIEnginePage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
-            <Brain className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
+            <Brain className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
             AI Engine
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base line-clamp-2">
+          <p className="text-[#6B7280] mt-1 text-sm md:text-base line-clamp-2">
             AI-powered analysis, variance detection, and automated insights for finance operations.
           </p>
         </div>
@@ -108,9 +108,9 @@ export function AIEnginePage() {
       {/* Main Grid */}
       <div className="grid gap-6 lg:grid-cols-3">
         {/* Analysis Panel */}
-        <Card className="lg:col-span-2 border-border bg-card">
+        <Card className="lg:col-span-2 border-[#E5E7EB] bg-white">
           <CardHeader>
-            <CardTitle className="text-card-foreground">Run Analysis</CardTitle>
+            <CardTitle className="text-[#2B2B2B]">Run Analysis</CardTitle>
             <CardDescription>
               Select a pipeline and provide context for AI-powered analysis
             </CardDescription>
@@ -118,7 +118,7 @@ export function AIEnginePage() {
           <CardContent className="space-y-4">
             <div className="grid gap-4 md:grid-cols-2">
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Analysis Pipeline</label>
+                <label className="text-sm font-medium text-[#2B2B2B]">Analysis Pipeline</label>
                 <Select value={selectedPipeline} onValueChange={setSelectedPipeline}>
                   <SelectTrigger>
                     <SelectValue placeholder="Select pipeline..." />
@@ -133,7 +133,7 @@ export function AIEnginePage() {
                 </Select>
               </div>
               <div className="space-y-2">
-                <label className="text-sm font-medium text-foreground">Data Source</label>
+                <label className="text-sm font-medium text-[#2B2B2B]">Data Source</label>
                 <Select>
                   <SelectTrigger>
                     <SelectValue placeholder="Select source..." />
@@ -149,7 +149,7 @@ export function AIEnginePage() {
             </div>
 
             <div className="space-y-2">
-              <label className="text-sm font-medium text-foreground">Analysis Context</label>
+              <label className="text-sm font-medium text-[#2B2B2B]">Analysis Context</label>
               <Textarea
                 placeholder="Describe what you want the AI to analyze. E.g., 'Compare May 2024 invoices against KRA records and flag any discrepancies above KES 10,000'"
                 className="min-h-[120px] resize-none"
@@ -160,7 +160,7 @@ export function AIEnginePage() {
 
             <div className="flex items-center gap-3">
               <Button
-                className="bg-primary text-primary-foreground hover:bg-primary/90"
+                className="bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
                 onClick={handleRunAnalysis}
                 disabled={isProcessing}
               >
@@ -186,41 +186,41 @@ export function AIEnginePage() {
 
         {/* Quick Stats */}
         <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 lg:grid-cols-1 lg:gap-3">
-          <Card className="border-border bg-card p-3 gap-1">
+          <Card className="border-[#E5E7EB] bg-white p-3 gap-1">
             <CardHeader className="p-0">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-[#6B7280]">
                 Analyses Today
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-xl md:text-2xl font-bold text-card-foreground">47</div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <div className="text-xl md:text-2xl font-bold text-[#2B2B2B]">47</div>
+              <p className="text-xs text-[#6B7280] mt-0.5">
                 <span className="text-chart-3">+12%</span> yesterday
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card p-3 gap-1">
+          <Card className="border-[#E5E7EB] bg-white p-3 gap-1">
             <CardHeader className="p-0">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-[#6B7280]">
                 Insights Generated
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-xl md:text-2xl font-bold text-card-foreground">156</div>
-              <p className="text-xs text-muted-foreground mt-0.5">This week</p>
+              <div className="text-xl md:text-2xl font-bold text-[#2B2B2B]">156</div>
+              <p className="text-xs text-[#6B7280] mt-0.5">This week</p>
             </CardContent>
           </Card>
 
-          <Card className="border-border bg-card p-3 gap-1">
+          <Card className="border-[#E5E7EB] bg-white p-3 gap-1">
             <CardHeader className="p-0">
-              <CardTitle className="text-xs font-medium text-muted-foreground">
+              <CardTitle className="text-xs font-medium text-[#6B7280]">
                 Avg Processing
               </CardTitle>
             </CardHeader>
             <CardContent className="p-0">
-              <div className="text-xl md:text-2xl font-bold text-card-foreground">2.3s</div>
-              <p className="text-xs text-muted-foreground mt-0.5">
+              <div className="text-xl md:text-2xl font-bold text-[#2B2B2B]">2.3s</div>
+              <p className="text-xs text-[#6B7280] mt-0.5">
                 <span className="text-chart-3">-18%</span> faster
               </p>
             </CardContent>
@@ -229,10 +229,10 @@ export function AIEnginePage() {
       </div>
 
       {/* Recent Insights */}
-      <Card className="border-border bg-card">
+      <Card className="border-[#E5E7EB] bg-white">
         <CardHeader className="flex flex-row items-center justify-between">
           <div>
-            <CardTitle className="text-card-foreground">Recent AI Insights</CardTitle>
+            <CardTitle className="text-[#2B2B2B]">Recent AI Insights</CardTitle>
             <CardDescription>Automated findings from recent analyses</CardDescription>
           </div>
           <Button variant="ghost" size="sm">
@@ -245,7 +245,7 @@ export function AIEnginePage() {
             {recentInsights.map((insight) => (
               <div
                 key={insight.id}
-                className="flex items-start gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors cursor-pointer"
+                className="flex items-start gap-4 p-4 rounded-lg bg-[#EEF2F7]/50 hover:bg-[#EEF2F7] transition-colors cursor-pointer"
               >
                 <div
                   className={`p-2 rounded-lg flex-shrink-0 ${
@@ -253,7 +253,7 @@ export function AIEnginePage() {
                       ? "bg-chart-3/10"
                       : insight.severity === "warning"
                       ? "bg-chart-5/10"
-                      : "bg-destructive/10"
+                      : "bg-[#ba1a1a]/10"
                   }`}
                 >
                   {insight.severity === "success" ? (
@@ -261,18 +261,18 @@ export function AIEnginePage() {
                   ) : insight.severity === "warning" ? (
                     <AlertTriangle className="h-5 w-5 text-chart-5" />
                   ) : (
-                    <AlertTriangle className="h-5 w-5 text-destructive" />
+                    <AlertTriangle className="h-5 w-5 text-[#ba1a1a]" />
                   )}
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="flex flex-wrap items-center gap-1.5 mb-1">
-                    <h4 className="font-medium text-card-foreground text-sm">{insight.title}</h4>
+                    <h4 className="font-medium text-[#2B2B2B] text-sm">{insight.title}</h4>
                     <span className="text-xs px-2 py-0.5 rounded-full bg-secondary text-secondary-foreground whitespace-nowrap">
                       {insight.source}
                     </span>
                   </div>
-                  <p className="text-sm text-muted-foreground">{insight.description}</p>
-                  <p className="text-xs text-muted-foreground mt-2">{insight.timestamp}</p>
+                  <p className="text-sm text-[#6B7280]">{insight.description}</p>
+                  <p className="text-xs text-[#6B7280] mt-2">{insight.timestamp}</p>
                 </div>
                 <Button variant="ghost" size="sm" className="flex-shrink-0">
                   <ArrowRight className="h-4 w-4" />

@@ -115,15 +115,15 @@ function getFileTypeColor(extension: string) {
   switch (ext) {
     case "xlsx":
     case "xls":
-      return { bg: "bg-blue-100 dark:bg-blue-900/30", text: "text-blue-600 dark:text-blue-400" };
+      return { bg: "bg-[#EEF2F7]", text: "text-[#0D3B8E]" };
     case "txt":
-      return { bg: "bg-purple-100 dark:bg-purple-900/30", text: "text-purple-600 dark:text-purple-400" };
+      return { bg: "bg-[#EEF2F7]", text: "text-[#1F5FBF]" };
     case "csv":
-      return { bg: "bg-orange-100 dark:bg-orange-900/30", text: "text-orange-600 dark:text-orange-400" };
+      return { bg: "bg-[#EEF2F7]", text: "text-[#C8A248]" };
     case "pdf":
-      return { bg: "bg-red-100 dark:bg-red-900/30", text: "text-red-600 dark:text-red-400" };
+      return { bg: "bg-[#EEF2F7]", text: "text-[#ef4444]" };
     default:
-      return { bg: "bg-gray-100 dark:bg-gray-900/30", text: "text-gray-600 dark:text-gray-400" };
+      return { bg: "bg-[#EEF2F7]", text: "text-[#6B7280]" };
   }
 }
 
@@ -138,14 +138,14 @@ function formatBytes(bytes: number) {
 function getStatusColor(status: string) {
   switch (status) {
     case "parsed":
-      return "bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-400";
+      return "bg-[#EEF2F7] text-[#0D3B8E]";
     case "parsing":
-      return "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400";
+      return "bg-[#EEF2F7] text-[#1F5FBF]";
     case "pending":
-      return "bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-400";
+      return "bg-[#EEF2F7] text-[#C8A248]";
     case "parse_error":
     case "skipped":
-      return "bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400";
+      return "bg-[#EEF2F7] text-[#ef4444]";
     default:
       return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
   }
@@ -154,13 +154,13 @@ function getStatusColor(status: string) {
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-muted mb-4">
-        <Server className="h-10 w-10 text-muted-foreground" />
+      <div className="p-4 rounded-full bg-[#EEF2F7] mb-4">
+        <Server className="h-10 w-10 text-[#6B7280]" />
       </div>
-      <h3 className="text-xl font-semibold text-foreground mb-2">
+      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">
         Awaiting Backend Connection
       </h3>
-      <p className="text-muted-foreground text-center max-w-md mb-6">
+      <p className="text-[#6B7280] text-center max-w-md mb-6">
         Connect to your Django backend to manage files, or enable Demo Mode to preview with sample data.
       </p>
       <Link href="/settings">
@@ -314,11 +314,11 @@ export function UploadsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
-            <Upload className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
+            <Upload className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
             File Manager
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base">
+          <p className="text-[#6B7280] mt-1 text-sm md:text-base">
             Upload and manage invoice files, billing data, and documents.
           </p>
         </div>
@@ -334,7 +334,7 @@ export function UploadsPage() {
             </Badge>
           )}
           {!demoMode && !backendConnected && (
-            <Badge variant="secondary" className="bg-muted text-muted-foreground">
+            <Badge variant="secondary" className="bg-[#EEF2F7] text-[#6B7280]">
               No Data Source
             </Badge>
           )}
@@ -342,7 +342,7 @@ export function UploadsPage() {
       </div>
 
       {showEmptyState ? (
-        <Card className="border-border bg-card">
+        <Card className="border-[#E5E7EB] bg-white">
           <AwaitingBackendState />
         </Card>
       ) : (
@@ -353,8 +353,8 @@ export function UploadsPage() {
               className={cn(
                 "border-2 border-dashed transition-colors",
                 isDragging
-                  ? "border-primary bg-primary/5"
-                  : "border-border bg-card hover:border-primary/50"
+                  ? "border-primary bg-[#0D3B8E]/5"
+                  : "border-[#E5E7EB] bg-white hover:border-primary/50"
               )}
               onDragOver={handleDragOver}
               onDragLeave={handleDragLeave}
@@ -362,19 +362,19 @@ export function UploadsPage() {
             >
               <CardContent className="py-12">
                 <div className="flex flex-col items-center justify-center text-center">
-                  <div className="p-4 rounded-full bg-primary/10 mb-4">
-                    <Upload className="h-8 w-8 text-primary" />
+                  <div className="p-4 rounded-full bg-[#0D3B8E]/10 mb-4">
+                    <Upload className="h-8 w-8 text-[#0D3B8E]" />
                   </div>
-                  <h3 className="text-lg font-semibold text-card-foreground mb-2">
+                  <h3 className="text-lg font-semibold text-[#2B2B2B] mb-2">
                     Upload Files
                   </h3>
-                  <p className="text-sm text-muted-foreground mb-4 max-w-md">
+                  <p className="text-sm text-[#6B7280] mb-4 max-w-md">
                     Drag and drop your invoice files, billing data, or documents here.
                     Supports TXT, XLSX, CSV, and PDF files.
                   </p>
                   <div className="flex flex-wrap items-center gap-2 justify-center">
                     <Button
-                      className="bg-primary text-primary-foreground hover:bg-primary/90"
+                      className="bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
                       onClick={() => fileInputRef.current?.click()}
                       disabled={isLoading}
                     >
@@ -406,18 +406,18 @@ export function UploadsPage() {
           )}
 
           {/* File List */}
-          <Card className="border-border bg-card">
+          <Card className="border-[#E5E7EB] bg-white">
             <CardHeader>
               <div className="flex flex-wrap items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-card-foreground">Uploaded Files</CardTitle>
+                  <CardTitle className="text-[#2B2B2B]">Uploaded Files</CardTitle>
                   <CardDescription>
                     {filteredFiles.length} files {!demoMode && `(Page ${currentPage} of ${totalPages})`}
                   </CardDescription>
                 </div>
                 <div className="flex items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:flex-none">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
                     <Input
                       placeholder="Search files..."
                       className="pl-9 w-full sm:w-64"
@@ -460,10 +460,10 @@ export function UploadsPage() {
             <CardContent>
               {isLoading && !demoMode ? (
                 <div className="flex items-center justify-center py-8">
-                  <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+                  <Loader2 className="h-6 w-6 animate-spin text-[#6B7280]" />
                 </div>
               ) : filteredFiles.length === 0 ? (
-                <div className="text-center py-8 text-muted-foreground">
+                <div className="text-center py-8 text-[#6B7280]">
                   <p>No files found</p>
                 </div>
               ) : (
@@ -473,7 +473,7 @@ export function UploadsPage() {
                     return (
                       <div
                         key={file.id}
-                        className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                        className="flex items-center gap-4 p-4 rounded-lg bg-[#EEF2F7]/50 hover:bg-[#EEF2F7] transition-colors group"
                       >
                         <div className={cn(
                           "p-2.5 rounded-lg flex-shrink-0",
@@ -483,7 +483,7 @@ export function UploadsPage() {
                         </div>
                         <div className="flex-1 min-w-0">
                           <div className="flex items-center gap-2 mb-1">
-                            <span className="font-medium text-card-foreground truncate">
+                            <span className="font-medium text-[#2B2B2B] truncate">
                               {file.name}
                             </span>
                             <span
@@ -512,7 +512,7 @@ export function UploadsPage() {
                               )}
                             </span>
                           </div>
-                          <div className="flex items-center gap-4 text-xs text-muted-foreground">
+                          <div className="flex items-center gap-4 text-xs text-[#6B7280]">
                             <span>{formatBytes(file.size)}</span>
                             <span>{file.detected_type}</span>
                             <span>{new Date(file.uploadedAt).toLocaleDateString()}</span>
@@ -543,7 +543,7 @@ export function UploadsPage() {
                                     Convert Format
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
-                                    className="text-destructive"
+                                    className="text-[#ba1a1a]"
                                     onClick={() => deleteFile(file.id)}
                                   >
                                     <Trash2 className="h-4 w-4 mr-2" />
@@ -572,7 +572,7 @@ export function UploadsPage() {
               >
                 Previous
               </Button>
-              <span className="text-sm text-muted-foreground">
+              <span className="text-sm text-[#6B7280]">
                 Page {currentPage} of {totalPages}
               </span>
               <Button
