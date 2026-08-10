@@ -101,11 +101,11 @@ const categoryIcons: Record<string, LucideIcon> = {
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-muted mb-4">
-        <Server className="h-10 w-10 text-muted-foreground" />
+      <div className="p-4 rounded-full bg-[#EEF2F7] mb-4">
+        <Server className="h-10 w-10 text-[#6B7280]" />
       </div>
-      <h3 className="text-xl font-semibold text-foreground mb-2">Awaiting Backend Connection</h3>
-      <p className="text-muted-foreground text-center max-w-md mb-6">
+      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">Awaiting Backend Connection</h3>
+      <p className="text-[#6B7280] text-center max-w-md mb-6">
         Connect to your Django backend to use the tools page, or enable Demo Mode to preview sample data.
       </p>
       <Link href="/settings">
@@ -305,18 +305,18 @@ export function ToolsPage() {
     <div className="space-y-6 pb-2">
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
-            <Wrench className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
+            <Wrench className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
             Data Tools
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm line-clamp-2">
+          <p className="text-[#6B7280] mt-1 text-sm line-clamp-2">
             Fetch and display available backend tools for data processing.
           </p>
         </div>
         <div className="flex items-center gap-2 sm:flex-shrink-0">
           {demoMode && <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">Demo Data</Badge>}
           {!demoMode && actualConnected && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Connected</Badge>}
-          {!demoMode && !actualConnected && <Badge variant="secondary" className="bg-muted text-muted-foreground">No Data Source</Badge>}
+          {!demoMode && !actualConnected && <Badge variant="secondary" className="bg-[#EEF2F7] text-[#6B7280]">No Data Source</Badge>}
         </div>
       </div>
 
@@ -342,36 +342,36 @@ export function ToolsPage() {
       </div>
 
       {showEmptyState ? (
-        <Card className="border-border bg-card">
+        <Card className="border-[#E5E7EB] bg-white">
           <AwaitingBackendState />
         </Card>
       ) : (
         <>
           {isLoading ? (
-            <Card className="border-border bg-card p-8">
+            <Card className="border-[#E5E7EB] bg-white p-8">
               <div className="flex flex-col items-center justify-center gap-4 text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                <Loader2 className="h-8 w-8 animate-spin text-[#0D3B8E]" />
                 <div>
-                  <h3 className="text-lg font-semibold text-foreground">Loading tools...</h3>
-                  <p className="text-sm text-muted-foreground">Fetching available tools from the backend.</p>
+                  <h3 className="text-lg font-semibold text-[#2B2B2B]">Loading tools...</h3>
+                  <p className="text-sm text-[#6B7280]">Fetching available tools from the backend.</p>
                 </div>
               </div>
             </Card>
           ) : error ? (
-            <Card className="border-border bg-card p-8">
+            <Card className="border-[#E5E7EB] bg-white p-8">
               <div className="space-y-4 text-center">
-                <h3 className="text-lg font-semibold text-foreground">Unable to load tools</h3>
-                <p className="text-sm text-muted-foreground">{error}</p>
+                <h3 className="text-lg font-semibold text-[#2B2B2B]">Unable to load tools</h3>
+                <p className="text-sm text-[#6B7280]">{error}</p>
                 <Link href="/settings">
                   <Button variant="outline">Check backend configuration</Button>
                 </Link>
               </div>
             </Card>
           ) : tools.length === 0 ? (
-            <Card className="border-border bg-card p-8">
+            <Card className="border-[#E5E7EB] bg-white p-8">
               <div className="space-y-3 text-center">
-                <h3 className="text-lg font-semibold text-foreground">No tools available</h3>
-                <p className="text-sm text-muted-foreground">
+                <h3 className="text-lg font-semibold text-[#2B2B2B]">No tools available</h3>
+                <p className="text-sm text-[#6B7280]">
                   Your backend is connected, but no enabled tools were returned.
                 </p>
               </div>
@@ -382,20 +382,20 @@ export function ToolsPage() {
                 <Card
                   key={tool.id}
                   className={cn(
-                    "border-border bg-card cursor-pointer transition-all hover:border-primary/50 hover:shadow-md p-3 gap-2",
-                    selectedTool === String(tool.id) ? "border-primary ring-1 ring-primary" : ""
+                    "border-[#E5E7EB] bg-white cursor-pointer transition-all hover:border-primary/50 hover:shadow-md p-3 gap-2",
+                    selectedTool === String(tool.id) ? "border-primary ring-1 ring-[#0D3B8E]" : ""
                   )}
                   onClick={() => setSelectedTool(String(tool.id))}
                 >
                   <CardHeader className="p-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
-                          <tool.icon className="h-4 w-4 text-primary" />
+                        <div className="p-2 rounded-lg bg-[#0D3B8E]/10 flex-shrink-0">
+                          <tool.icon className="h-4 w-4 text-[#0D3B8E]" />
                         </div>
                         <div>
-                          <CardTitle className="text-sm text-card-foreground leading-snug">{tool.name}</CardTitle>
-                          <div className="text-xs text-muted-foreground">{tool.category}</div>
+                          <CardTitle className="text-sm text-[#2B2B2B] leading-snug">{tool.name}</CardTitle>
+                          <div className="text-xs text-[#6B7280]">{tool.category}</div>
                         </div>
                       </div>
                       <Badge variant="secondary" className="text-xs flex-shrink-0">
@@ -404,9 +404,9 @@ export function ToolsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{tool.description}</p>
+                    <p className="text-xs text-[#6B7280] mb-2 line-clamp-2">{tool.description}</p>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3 flex-shrink-0" />
                           <span>{tool.lastRun}</span>
