@@ -98,7 +98,7 @@ if docker-compose ps | grep -q "healthy\|Up"; then
     
     # Get container IP
     CONTAINER_IP=$(docker-compose exec -T frontend hostname -I | awk '{print $1}')
-    echo -e "${GREEN}Frontend is running at: http://localhost:3000${NC}"
+    echo -e "${GREEN}Frontend is running at: http://localhost:3001${NC}"
 else
     echo -e "${RED}✗ Container failed to start. Checking logs...${NC}"
     docker-compose logs frontend
