@@ -1,5 +1,5 @@
 services:
-  kn-finance-app:
+  guardian-app:
     build:
       context: .
       dockerfile: Dockerfile
@@ -8,9 +8,9 @@ services:
         - NEXT_PUBLIC_ALLOWED_HOSTS=${NEXT_PUBLIC_ALLOWED_HOSTS}
         - NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=${NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS:-false}
         - NEXT_PUBLIC_DEFAULT_DEMO_MODE=${NEXT_PUBLIC_DEFAULT_DEMO_MODE:-false}
-    container_name: kn-finance-app
+    container_name: guardian-app
     ports:
-      - "3000:3000"
+      - "3000:3001"
     environment:
       - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
       - NEXT_PUBLIC_ALLOWED_HOSTS=${NEXT_PUBLIC_ALLOWED_HOSTS}
@@ -19,9 +19,9 @@ services:
       - XAI_API_KEY=${XAI_API_KEY}
     restart: unless-stopped
     networks:
-      - kn-network
+      - guardian-network
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3000/health"]
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
       interval: 30s
       timeout: 3s
       retries: 3
@@ -29,18 +29,18 @@ services:
 
   nginx:
     image: nginx:alpine
-    container_name: kn-nginx
+    container_name: guardian-nginx
     ports:
       - "6080:80"
       - "6443:443"
     volumes:
-      - ./nginx/kuehne.conf:/etc/nginx/conf.d/default.conf:ro
+      - ./nginx/guardian.conf:/etc/nginx/conf.d/default.conf:ro
       - /etc/letsencrypt:/etc/letsencrypt:ro
     depends_on:
-      - kn-finance-app
+      - guardian-app
     restart: unless-stopped
     networks:
-      - kn-network
+      - guardian-network
     healthcheck:
       test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost/health"]
       interval: 30s
@@ -48,5 +48,5 @@ services:
       retries: 3
 
 networks:
-  kn-network:
+  guardian-network:
     driver: bridge

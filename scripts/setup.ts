@@ -43,7 +43,7 @@ async function main() {
   console.log('\n');
   console.log('╔═══════════════════════════════════════════════════════════╗');
   console.log('║                                                           ║');
-  console.log('║   K+N Finance Automation Platform - Setup                 ║');
+  console.log('║   Guardian Finance Automation Platform - Setup                 ║');
   console.log('║                                                           ║');
   console.log('╚═══════════════════════════════════════════════════════════╝');
   console.log('\n');
@@ -142,7 +142,7 @@ async function main() {
   console.log(`│  1. Start the development server:                           │`);
   console.log(`│     ${packageManager === 'pnpm' ? 'pnpm dev' : 'npm run dev'}                                            │`);
   console.log('│                                                             │');
-  console.log('│  2. Open http://localhost:3000 in your browser              │');
+  console.log('│  2. Open http://localhost:3001 in your browser              │');
   console.log('│                                                             │');
   console.log('│  3. Toggle Demo Mode to see sample data                     │');
   console.log('│                                                             │');
