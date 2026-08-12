@@ -276,7 +276,9 @@ const readDemoConvs = (): Conversation[] => {
   }
 };
 const writeDemoConvs = (list: Conversation[]) => {
-  try { localStorage.setItem(DEMO_CONVS_KEY, JSON.stringify(list)); } catch {}
+  try {
+    localStorage.setItem(DEMO_CONVS_KEY, JSON.stringify(list));
+  } catch {}
 };
 const readDemoMsgs = (id: string): Message[] => {
   try {
@@ -287,16 +289,39 @@ const readDemoMsgs = (id: string): Message[] => {
   }
 };
 const writeDemoMsgs = (id: string, msgs: Message[]) => {
-  try { localStorage.setItem(demoCmsKey(id), JSON.stringify(msgs)); } catch {}
+  try {
+    localStorage.setItem(demoCmsKey(id), JSON.stringify(msgs));
+  } catch {}
 };
 const purgeDemoMsgs = (id: string) => {
-  try { localStorage.removeItem(demoCmsKey(id)); } catch {}
+  try {
+    localStorage.removeItem(demoCmsKey(id));
+  } catch {}
 };
 
 // ─── Component ────────────────────────────────────────────────────────────────
 
+// A slow turn (large file, chunked analysis) can legitimately take a while —
+// the backend keeps running it in the background regardless of whether this
+// tab is still waiting, so this is a client-side patience budget, not a
+// server-side deadline. See chat/views.py:_run_turn_via_worker on the
+// backend for the matching bounded-wait/WS-handoff design.
+const CHAT_TURN_TIMEOUT_MS = 120_000;
+const CHAT_POLL_INTERVAL_MS = 3_000;
+
+/** Thrown by waitForAssistantReply on the client-side patience budget
+ * elapsing — distinct from a real failure so the UI can say "still
+ * processing" instead of "error" (the turn is still running server-side). */
+class ChatTurnTimeoutError extends Error {}
+
+interface PendingTurn {
+  resolve: (msg: { id: string | number; attachments: Attachment[] }) => void;
+  reject: (err: Error) => void;
+}
+
 export function ChatPage() {
-  const { demoMode, backendConnected, apiFetch } = useApp();
+  const { demoMode, backendConnected, apiFetch, accessToken, backendUrl } =
+    useApp();
 
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
@@ -337,6 +362,14 @@ export function ChatPage() {
   const initDoneRef = useRef(false);
   const demoInitDoneRef = useRef(false);
   const creatingConvRef = useRef<Promise<string | null> | null>(null);
+
+  // Chat WebSocket — delivers the assistant reply for a turn dispatched to
+  // the backend worker (see sendToBackend/waitForAssistantReply below)
+  // without this tab having to hold an HTTP request open for however long
+  // the turn takes. One socket per active conversation.
+  const wsRef = useRef<WebSocket | null>(null);
+  const wsConversationIdRef = useRef<string | null>(null);
+  const pendingTurnsRef = useRef<Map<string, PendingTurn>>(new Map());
 
   useEffect(() => {
     conversationIdRef.current = conversationId;
@@ -412,7 +445,14 @@ export function ChatPage() {
       if (demoMode) {
         const id = `demo-${Date.now()}`;
         const now = new Date().toISOString();
-        const conv: Conversation = { id, title, created_at: now, updated_at: now, message_count: 0, last_message_preview: null };
+        const conv: Conversation = {
+          id,
+          title,
+          created_at: now,
+          updated_at: now,
+          message_count: 0,
+          last_message_preview: null,
+        };
         setConversationId(id);
         conversationIdRef.current = id;
         setConversationTitle(title);
@@ -421,8 +461,8 @@ export function ChatPage() {
         // is sent (handleSubmit does writeDemoConvs on the first exchange).
         // This prevents empty "ghost" conversations from becoming the "most recent"
         // entry and replacing an active conversation after navigation.
-        setConversations(prev => [conv, ...prev]);
-        setFilteredConversations(prev => [conv, ...prev]);
+        setConversations((prev) => [conv, ...prev]);
+        setFilteredConversations((prev) => [conv, ...prev]);
         return id;
       }
       if (!backendConnected || !apiFetch) {
@@ -483,9 +523,12 @@ export function ChatPage() {
         setMessages(msgs.length > 0 ? msgs : [buildWelcome()]);
         setConversationId(convId);
         conversationIdRef.current = convId;
-        const conv = conversations.find(c => c.id === convId);
+        const conv = conversations.find((c) => c.id === convId);
         if (conv) setConversationTitle(conv.title);
-        setTimeout(() => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }), 100);
+        setTimeout(
+          () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" }),
+          100,
+        );
         return;
       }
       if (!backendConnected || !apiFetch) return;
@@ -583,10 +626,16 @@ export function ChatPage() {
   const updateConversationTitle = useCallback(
     async (convId: string, newTitle: string) => {
       if (demoMode) {
-        const upd = (list: Conversation[]) => list.map(c => c.id === convId ? { ...c, title: newTitle } : c);
-        setConversations(prev => { const u = upd(prev); writeDemoConvs(u); return u; });
+        const upd = (list: Conversation[]) =>
+          list.map((c) => (c.id === convId ? { ...c, title: newTitle } : c));
+        setConversations((prev) => {
+          const u = upd(prev);
+          writeDemoConvs(u);
+          return u;
+        });
         setFilteredConversations(upd);
-        if (conversationIdRef.current === convId) setConversationTitle(newTitle);
+        if (conversationIdRef.current === convId)
+          setConversationTitle(newTitle);
         return true;
       }
       if (!backendConnected || !apiFetch) return false;
@@ -660,8 +709,13 @@ export function ChatPage() {
     async (convId: string) => {
       if (demoMode) {
         purgeDemoMsgs(convId);
-        const rm = (list: Conversation[]) => list.filter(c => c.id !== convId);
-        setConversations(prev => { const u = rm(prev); writeDemoConvs(u); return u; });
+        const rm = (list: Conversation[]) =>
+          list.filter((c) => c.id !== convId);
+        setConversations((prev) => {
+          const u = rm(prev);
+          writeDemoConvs(u);
+          return u;
+        });
         setFilteredConversations(rm);
         if (conversationIdRef.current === convId) await createNewConversation();
         return true;
@@ -691,13 +745,15 @@ export function ChatPage() {
   // ── Clear all history ──────────────────────────────────────────────────────
   const clearAllHistory = useCallback(async () => {
     if (demoMode) {
-      conversations.forEach(c => purgeDemoMsgs(c.id));
+      conversations.forEach((c) => purgeDemoMsgs(c.id));
       writeDemoConvs([]);
       setConversations([]);
       setFilteredConversations([]);
       await createNewConversation();
       setClearAllDialogOpen(false);
-      toast.success("History Cleared", { description: "All conversations have been deleted." });
+      toast.success("History Cleared", {
+        description: "All conversations have been deleted.",
+      });
       return;
     }
     if (!backendConnected || !apiFetch) return;
@@ -773,7 +829,166 @@ export function ChatPage() {
   const removePendingFile = (idx: number) =>
     setPendingFiles((prev) => prev.filter((_, i) => i !== idx));
 
+  // ── Chat WebSocket ──────────────────────────────────────────────────────────
+  // Delivers turn results pushed by the backend worker (chat.tasks.run_chat_turn_task)
+  // over /ws/chat/<conversationId>/ instead of this tab holding an HTTP
+  // request open for however long the turn takes. sendToBackend dispatches
+  // the turn over REST (near-instant 202 + turnId) and this socket resolves
+  // the matching entry in pendingTurnsRef when the turn's "done"/"error"
+  // frame arrives. Polling in waitForAssistantReply is the fallback for a
+  // socket that never connects or drops mid-turn.
+  const connectChatSocket = useCallback(
+    (convId: string) => {
+      if (demoMode || !backendConnected) return;
+      const current = wsRef.current;
+      const currentIsLive =
+        current &&
+        (current.readyState === WebSocket.OPEN ||
+          current.readyState === WebSocket.CONNECTING);
+      if (currentIsLive && wsConversationIdRef.current === convId) return;
+
+      current?.close();
+
+      const wsBase = backendUrl.replace(/^http/, "ws");
+      const url = `${wsBase}/ws/chat/${convId}/?token=${encodeURIComponent(accessToken ?? "")}`;
+      const socket = new WebSocket(url);
+      wsRef.current = socket;
+      wsConversationIdRef.current = convId;
+
+      socket.onmessage = (event) => {
+        let data: any;
+        try {
+          data = JSON.parse(event.data);
+        } catch {
+          return;
+        }
+        const turnId = data.turnId ?? data.turn_id;
+        const pending = turnId ? pendingTurnsRef.current.get(turnId) : undefined;
+        if (!pending) return;
+
+        if (data.type === "done") {
+          pending.resolve({
+            id: data.messageId,
+            attachments: data.attachments ?? [],
+          });
+        } else if (data.type === "error") {
+          pending.reject(new Error(data.message || "The assistant turn failed."));
+        } else if (data.type === "cancelled") {
+          pending.reject(new Error("Turn cancelled."));
+        }
+        // "ack" / "processing" / "text" / "status" frames are progress
+        // updates, not resolution — keep waiting.
+      };
+
+      socket.onerror = () => {
+        // waitForAssistantReply's polling fallback covers this — a socket
+        // that fails to connect or drops mid-turn isn't fatal, just slower.
+      };
+
+      socket.onclose = () => {
+        if (wsRef.current === socket) {
+          wsRef.current = null;
+          wsConversationIdRef.current = null;
+        }
+      };
+    },
+    [demoMode, backendConnected, backendUrl, accessToken],
+  );
+
+  useEffect(() => {
+    if (conversationId) connectChatSocket(conversationId);
+    return () => {
+      wsRef.current?.close();
+      wsRef.current = null;
+      wsConversationIdRef.current = null;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, backendConnected, demoMode]);
+
+  /**
+   * Wait for the assistant's reply to a dispatched turn, primarily via the
+   * chat WebSocket, falling back to polling the conversation's message list
+   * if the socket never delivers (not connected, dropped, etc). Gives up
+   * after CHAT_TURN_TIMEOUT_MS — the turn is NOT lost when this happens, it
+   * keeps running on the backend and will show up on the next load/poll;
+   * this is purely how long *this tab* stays open waiting for it.
+   */
+  const waitForAssistantReply = useCallback(
+    (
+      convId: string,
+      turnId: string,
+      sentAt: number,
+    ): Promise<{ id: string | number; attachments: Attachment[] }> => {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        let pollTimer: ReturnType<typeof setInterval>;
+        let overallTimer: ReturnType<typeof setTimeout>;
+
+        const finish = (fn: () => void) => {
+          if (settled) return;
+          settled = true;
+          clearInterval(pollTimer);
+          clearTimeout(overallTimer);
+          pendingTurnsRef.current.delete(turnId);
+          fn();
+        };
+
+        pendingTurnsRef.current.set(turnId, {
+          resolve: (msg) => finish(() => resolve(msg)),
+          reject: (err) => finish(() => reject(err)),
+        });
+
+        // Fallback for a socket that isn't connected or dropped mid-turn —
+        // check whether a new assistant message has landed since we sent.
+        pollTimer = setInterval(async () => {
+          try {
+            const res = await apiFetch(
+              `chat/history/?conversationId=${convId}&limit=5`,
+            );
+            if (!res.ok) return;
+            const data = await res.json();
+            const list: any[] = data.messages ?? [];
+            const reply = [...list]
+              .reverse()
+              .find(
+                (m) =>
+                  m.role === "assistant" &&
+                  new Date(m.created_at).getTime() >= sentAt,
+              );
+            if (reply) {
+              finish(() =>
+                resolve({ id: reply.id, attachments: reply.attachments ?? [] }),
+              );
+            }
+          } catch {
+            // Transient — the next poll tick or the socket will catch it.
+          }
+        }, CHAT_POLL_INTERVAL_MS);
+
+        overallTimer = setTimeout(() => {
+          finish(() =>
+            reject(
+              new ChatTurnTimeoutError(
+                "This is taking longer than usual (likely a large file). " +
+                  "It's still processing — check back in a moment or reload " +
+                  "the conversation.",
+              ),
+            ),
+          );
+        }, CHAT_TURN_TIMEOUT_MS);
+      });
+    },
+    [apiFetch],
+  );
+
   // ── Send message ───────────────────────────────────────────────────────────
+  // Dispatches the turn (near-instant 202 + turnId — the backend runs it in
+  // a worker, not on this request) then waits for the result over the chat
+  // WebSocket, polling as a fallback. See waitForAssistantReply above and
+  // chat/views.py:_run_turn_via_worker on the backend for why: a slow turn
+  // (large file, chunked analysis) can take longer than any HTTP proxy is
+  // willing to hold a connection open for, so the wait happens client-side
+  // against a socket/poll instead of a single blocking request.
   const sendToBackend = useCallback(
     async (
       userMsg: Message,
@@ -788,14 +1003,20 @@ export function ChatPage() {
         if (!convId) throw new Error("Could not create conversation");
       }
 
+      // Make sure the socket for this conversation is already connecting
+      // before we dispatch, so we don't race a fast reply against the
+      // handshake.
+      connectChatSocket(convId);
+
       const formData = new FormData();
       formData.append("message", userMsg.content);
       for (const f of files) formData.append("files", f);
 
-      const res = await apiFetch(`chat/conversations/${convId}/send/`, {
-        method: "POST",
-        body: formData,
-      });
+      const sentAt = Date.now();
+      const res = await apiFetch(
+        `chat/conversations/${convId}/send/?async=1`,
+        { method: "POST", body: formData },
+      );
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -805,51 +1026,45 @@ export function ChatPage() {
       }
 
       const data = await res.json();
+      const userAttachments: Attachment[] = data.user_message?.attachments ?? [];
 
-      const userAttachments: Attachment[] = data.user_attachments ?? [];
-
-      let assistantContent = "";
-      let assistantId = `msg-${Date.now()}`;
-      let assistantCreatedAt = new Date().toISOString();
-      let assistantAttachments: Attachment[] = [];
-
-      // Handle the response from your backend
-      if (data.messages && Array.isArray(data.messages)) {
-        // Find the assistant message in the messages array
-        const assistantMsg = data.messages.find(
-          (m: any) => m.role === "assistant",
+      if (!data.turn_id) {
+        // Defensive — the async endpoint should always return a turn_id.
+        throw new Error(
+          data.error ?? "The server accepted the message but gave no turn to track.",
         );
-        if (assistantMsg) {
-          assistantContent = assistantMsg.content;
-          assistantId = assistantMsg.id || assistantId;
-          assistantCreatedAt = assistantMsg.created_at || assistantCreatedAt;
-          assistantAttachments = assistantMsg.attachments || [];
-        }
-      } else if (data.assistant_message) {
-        assistantContent =
-          data.assistant_message.content ||
-          data.response ||
-          "Response received.";
-        assistantId = data.assistant_message.id || assistantId;
-        assistantCreatedAt =
-          data.assistant_message.created_at || assistantCreatedAt;
-        assistantAttachments = data.assistant_message.attachments || [];
-      } else if (data.response) {
-        assistantContent = data.response;
-      } else if (data.content) {
-        assistantContent = data.content;
-      } else if (typeof data === "string") {
-        assistantContent = data;
-      } else {
-        assistantContent = "Response received.";
       }
 
-      if (data.output_attachments?.length) {
-        assistantAttachments = data.output_attachments;
+      const { id: assistantMessageId, attachments: assistantAttachments } =
+        await waitForAssistantReply(convId, data.turn_id, sentAt);
+
+      // The reply is already saved server-side by the time the socket/poll
+      // resolves — fetch it rather than guessing its content, so it always
+      // matches what's actually stored (including any tool-produced text).
+      let assistantContent = "Response received.";
+      let assistantCreatedAt = new Date().toISOString();
+      try {
+        const historyRes = await apiFetch(
+          `chat/history/?conversationId=${convId}&limit=5`,
+        );
+        if (historyRes.ok) {
+          const historyData = await historyRes.json();
+          const list: any[] = historyData.messages ?? [];
+          const found = list.find(
+            (m) => String(m.id) === String(assistantMessageId),
+          );
+          if (found) {
+            assistantContent = found.content;
+            assistantCreatedAt = found.created_at;
+          }
+        }
+      } catch {
+        // Keep the fallback content — the message list will show the real
+        // reply next time the conversation loads regardless.
       }
 
       const assistant: Message = {
-        id: assistantId,
+        id: assistantMessageId,
         role: "assistant",
         content: assistantContent,
         created_at: assistantCreatedAt,
@@ -858,7 +1073,7 @@ export function ChatPage() {
 
       return { assistant, userAttachments };
     },
-    [backendConnected, apiFetch, createNewConversation],
+    [backendConnected, apiFetch, createNewConversation, connectChatSocket, waitForAssistantReply],
   );
 
   // ── Download attachment ────────────────────────────────────────────────────
@@ -926,11 +1141,22 @@ export function ChatPage() {
         if (!demoConvId) {
           demoConvId = `demo-${Date.now()}`;
           const now = new Date().toISOString();
-          const newConv: Conversation = { id: demoConvId, title: "New Conversation", created_at: now, updated_at: now, message_count: 0, last_message_preview: null };
+          const newConv: Conversation = {
+            id: demoConvId,
+            title: "New Conversation",
+            created_at: now,
+            updated_at: now,
+            message_count: 0,
+            last_message_preview: null,
+          };
           setConversationId(demoConvId);
           conversationIdRef.current = demoConvId;
-          setConversations(prev => { const u = [newConv, ...prev]; writeDemoConvs(u); return u; });
-          setFilteredConversations(prev => [newConv, ...prev]);
+          setConversations((prev) => {
+            const u = [newConv, ...prev];
+            writeDemoConvs(u);
+            return u;
+          });
+          setFilteredConversations((prev) => [newConv, ...prev]);
         }
 
         await new Promise((r) => setTimeout(r, 1200));
@@ -945,31 +1171,46 @@ export function ChatPage() {
         };
 
         // Save conversation to localStorage
-        const prevReal = messages.filter(m => !isWelcomeMessage(m));
+        const prevReal = messages.filter((m) => !isWelcomeMessage(m));
         const allMsgs = [...prevReal, userMsg, assistantMsg];
         writeDemoMsgs(demoConvId, allMsgs);
 
         // Auto-title on first exchange
         const isFirst = prevReal.length === 0;
         const newTitle = isFirst ? generateTitleFromContent(userContent) : null;
-        setConversations(prev => {
-          const u = prev.map(c => c.id === demoConvId ? {
-            ...c,
-            ...(newTitle && newTitle !== "New Conversation" ? { title: newTitle } : {}),
-            message_count: allMsgs.length,
-            last_message_preview: userContent.slice(0, 80),
-            updated_at: new Date().toISOString(),
-          } : c);
+        setConversations((prev) => {
+          const u = prev.map((c) =>
+            c.id === demoConvId
+              ? {
+                  ...c,
+                  ...(newTitle && newTitle !== "New Conversation"
+                    ? { title: newTitle }
+                    : {}),
+                  message_count: allMsgs.length,
+                  last_message_preview: userContent.slice(0, 80),
+                  updated_at: new Date().toISOString(),
+                }
+              : c,
+          );
           writeDemoConvs(u);
           return u;
         });
-        setFilteredConversations(prev => prev.map(c => c.id === demoConvId ? {
-          ...c,
-          ...(newTitle && newTitle !== "New Conversation" ? { title: newTitle } : {}),
-          message_count: allMsgs.length,
-          last_message_preview: userContent.slice(0, 80),
-        } : c));
-        if (newTitle && newTitle !== "New Conversation") setConversationTitle(newTitle);
+        setFilteredConversations((prev) =>
+          prev.map((c) =>
+            c.id === demoConvId
+              ? {
+                  ...c,
+                  ...(newTitle && newTitle !== "New Conversation"
+                    ? { title: newTitle }
+                    : {}),
+                  message_count: allMsgs.length,
+                  last_message_preview: userContent.slice(0, 80),
+                }
+              : c,
+          ),
+        );
+        if (newTitle && newTitle !== "New Conversation")
+          setConversationTitle(newTitle);
       } else {
         const { assistant, userAttachments } = await sendToBackend(
           userMsg,
@@ -1010,17 +1251,25 @@ export function ChatPage() {
       await loadConversations();
     } catch (err) {
       const msg = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Error", { description: msg });
+      const isTimeout = err instanceof ChatTurnTimeoutError;
+      if (isTimeout) {
+        toast.info("Still Processing", { description: msg });
+      } else {
+        toast.error("Error", { description: msg });
+      }
       setMessages((prev) => [
         ...prev,
         {
           id: `err-${Date.now()}`,
           role: "assistant",
-          content: `Error: ${msg}`,
+          content: isTimeout ? msg : `Error: ${msg}`,
           created_at: new Date().toISOString(),
         },
       ]);
-      if (filesToSend.length > 0) setPendingFiles(filesToSend);
+      // A timeout means the turn is still running server-side — the files
+      // were already accepted, so don't restore them into the composer as
+      // if the send itself had failed.
+      if (filesToSend.length > 0 && !isTimeout) setPendingFiles(filesToSend);
     } finally {
       setIsLoading(false);
     }
@@ -1053,7 +1302,8 @@ export function ChatPage() {
     demoInitDoneRef.current = true;
 
     const saved = readDemoConvs().sort(
-      (a, b) => new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+      (a, b) =>
+        new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
     );
     setConversations(saved);
     setFilteredConversations(saved);
@@ -1071,7 +1321,7 @@ export function ChatPage() {
       }
     }
     setMessages([buildWelcome()]);
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoMode]);
 
   // ── Backend mode initialization ─────────────────────────────────────────────
@@ -1095,7 +1345,7 @@ export function ChatPage() {
         await restoreLastSession(list);
       })().catch(console.error);
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [demoMode, backendConnected]);
 
   // ── Filter conversations ───────────────────────────────────────────────────
@@ -1739,7 +1989,10 @@ export function ChatPage() {
           )}
 
           <div className="border-t border-border/50 p-3 md:p-6 flex-shrink-0">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3">
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center gap-2 md:gap-3"
+            >
               <input
                 type="file"
                 ref={fileInputRef}
@@ -1829,7 +2082,10 @@ export function ChatPage() {
           </SheetHeader>
           <div className="p-3 border-b border-border/50 space-y-2">
             <Button
-              onClick={() => { createNewConversation(); setMobileHistoryOpen(false); }}
+              onClick={() => {
+                createNewConversation();
+                setMobileHistoryOpen(false);
+              }}
               className="w-full h-9 rounded-lg text-sm"
               size="sm"
             >
@@ -1842,15 +2098,25 @@ export function ChatPage() {
                 <Loader2 className="h-5 w-5 animate-spin inline" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No conversations yet</p>
+              <p className="text-xs text-muted-foreground text-center py-8">
+                No conversations yet
+              </p>
             ) : (
               filteredConversations.map((conv) => (
                 <div
                   key={conv.id}
                   role="button"
                   tabIndex={0}
-                  onClick={() => { loadConversation(conv.id); setMobileHistoryOpen(false); }}
-                  onKeyDown={(e) => { if (e.key === "Enter") { loadConversation(conv.id); setMobileHistoryOpen(false); } }}
+                  onClick={() => {
+                    loadConversation(conv.id);
+                    setMobileHistoryOpen(false);
+                  }}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      loadConversation(conv.id);
+                      setMobileHistoryOpen(false);
+                    }
+                  }}
                   className={cn(
                     "w-full text-left p-2.5 rounded-lg cursor-pointer transition-colors",
                     conversationId === conv.id
@@ -1858,7 +2124,9 @@ export function ChatPage() {
                       : "hover:bg-muted",
                   )}
                 >
-                  <div className="font-medium truncate text-sm">{conv.title}</div>
+                  <div className="font-medium truncate text-sm">
+                    {conv.title}
+                  </div>
                   <div className="text-xs opacity-60 mt-0.5 flex items-center gap-1">
                     <Clock className="h-2.5 w-2.5" />
                     {formatDate(conv.updated_at || conv.created_at)}
