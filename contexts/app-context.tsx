@@ -43,10 +43,10 @@ interface AppContextType {
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
-  apiFetch: (
-    path: string,
-    options?: { method?: string; body?: any; _retry?: boolean },
-  ) => Promise<Response>;
+   apiFetch: (
+     path: string,
+     options?: { method?: string; body?: any; _retry?: boolean; signal?: AbortSignal },
+   ) => Promise<Response>;
   demoMode: boolean;
   setDemoMode: (value: boolean) => void;
   backendConnected: boolean;
@@ -104,6 +104,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       method?: string;
       body?: any;
       _retry?: boolean;
+      signal?: AbortSignal;
     } = {},
   ) => {
     const url = `${backendUrl}/api/${path}`;
@@ -128,6 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
           ? options.body
           : JSON.stringify(options.body)
         : undefined,
+      signal: options.signal,
     });
 
     // If 401 and we haven't retried yet, try to refresh token
@@ -206,11 +208,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Fetch user profile
-  const fetchUserProfile = async () => {
+  const fetchUserProfile = async (signal?: AbortSignal) => {
     if (demoMode) return;
 
     try {
-      const response = await apiFetch("auth/profile/");
+      const response = await apiFetch("auth/profile/", { signal });
 
       if (response.ok) {
         const data = await response.json();
@@ -357,7 +359,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!demoMode) {
-        await fetchUserProfile();
+        await fetchUserProfile(AbortSignal.timeout(5000));
       }
 
       setIsInitializing(false);
@@ -411,7 +413,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
   }, [backendUrl, demoMode]);
 
   if (isInitializing) {
-    return null; // Or a loading spinner
+    return (
+      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB]">
+        <div className="flex flex-col items-center gap-4">
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0D3B8E]/20 border-t-[#0D3B8E]" />
+          <p className="text-sm text-[#6B7280]">Loading Guardian...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
