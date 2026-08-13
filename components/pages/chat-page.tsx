@@ -1990,11 +1990,6 @@ export function ChatPage() {
 
           <div className="border-t border-[#E5E7EB]/50 p-3 md:p-6 flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3">
-          <div className="border-t border-border/50 p-3 md:p-6 flex-shrink-0">
-            <form
-              onSubmit={handleSubmit}
-              className="flex items-center gap-2 md:gap-3"
-            >
               <input
                 type="file"
                 ref={fileInputRef}
@@ -2101,9 +2096,6 @@ export function ChatPage() {
               </div>
             ) : filteredConversations.length === 0 ? (
               <p className="text-xs text-[#6B7280] text-center py-8">No conversations yet</p>
-              <p className="text-xs text-muted-foreground text-center py-8">
-                No conversations yet
-              </p>
             ) : (
               filteredConversations.map((conv) => (
                 <div

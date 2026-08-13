@@ -145,16 +145,16 @@ export function AnalyticsPage() {
       setError(null);
 
       try {
-        const overviewResponse = await apiFetch(`analytics/overview?period=${period}`);
+        const overviewResponse = await apiFetch(`analytics/overview/?period=${period}`);
         if (!overviewResponse.ok) {
           const payload = await overviewResponse.json().catch(() => null);
           throw new Error(payload?.detail || payload?.error || `Overview request failed (${overviewResponse.status})`);
         }
 
         const [processingResponse, accuracyResponse, categoryResponse] = await Promise.all([
-          apiFetch(`analytics/charts/processing-trend?period=${period}`),
-          apiFetch(`analytics/charts/accuracy-trend?period=${period}`),
-          apiFetch(`analytics/charts/category-breakdown?period=${period}`),
+          apiFetch(`analytics/charts/processing-trend/?period=${period}`),
+          apiFetch(`analytics/charts/accuracy-trend/?period=${period}`),
+          apiFetch(`analytics/charts/category-breakdown/?period=${period}`),
         ]);
 
         if (!processingResponse.ok || !accuracyResponse.ok || !categoryResponse.ok) {

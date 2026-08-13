@@ -174,37 +174,37 @@ const demoProcessingData = [
 const demoRecentActivity = [
   {
     id: 1,
-    action: "Silent Arrears flagged — TL101 #48213",
+    title: "Silent Arrears flagged — TL101 #48213",
     description: "Drawing power below outstanding; BRNET shows no arrears.",
-    time: "12 minutes ago",
+    timestamp: "12 minutes ago",
     status: "warning" as const,
   },
   {
     id: 2,
-    action: "Batch scrutiny complete",
+    title: "Batch scrutiny complete",
     description: "62 TL101 accounts checked against Guardian Financial Tool.",
-    time: "1 hour ago",
+    timestamp: "1 hour ago",
     status: "success" as const,
   },
   {
     id: 3,
-    action: "Miscalculated Arrears flagged — TL101 #33876",
+    title: "Miscalculated Arrears flagged — TL101 #33876",
     description: "BRNET arrears amount does not match expected installment shortfall.",
-    time: "2 hours ago",
+    timestamp: "2 hours ago",
     status: "error" as const,
   },
   {
     id: 4,
-    action: "Dormant Penalty flagged — TL101 #51002",
+    title: "Dormant Penalty flagged — TL101 #51002",
     description: "Account in arrears; default rate not accruing in BRNET.",
-    time: "3 hours ago",
+    timestamp: "3 hours ago",
     status: "warning" as const,
   },
   {
     id: 5,
-    action: "BRNET export synced",
+    title: "BRNET export synced",
     description: "Nightly account statement and loan schedule export processed.",
-    time: "Yesterday, 11:59 PM",
+    timestamp: "Yesterday, 11:59 PM",
     status: "success" as const,
   },
 ];
@@ -219,11 +219,11 @@ interface StatsCard {
 }
 
 interface ActivityItem {
-  id: number;
-  action: string;
+  id: string | number;
+  title: string;
   description: string;
-  time: string;
-  status: "success" | "warning" | "error";
+  timestamp: string;
+  status: "success" | "warning" | "error" | "pending";
 }
 
 interface ProcessingDataPoint {
@@ -236,7 +236,19 @@ const activityStatusStyles = {
   success: { icon: "check_circle", bg: `${gb.success}1A`, fg: gb.success },
   warning: { icon: "warning", bg: `${gb.warning}1A`, fg: gb.warning },
   error: { icon: "error", bg: `${gb.error}1A`, fg: gb.error },
+  pending: { icon: "schedule", bg: `${gb.secondaryText}1A`, fg: gb.secondaryText },
 } as const;
+
+function formatRelativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime();
+  const mins = Math.floor(diffMs / 60000);
+  if (mins < 1) return "Just now";
+  if (mins < 60) return `${mins} minute${mins === 1 ? "" : "s"} ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours} hour${hours === 1 ? "" : "s"} ago`;
+  const days = Math.floor(hours / 24);
+  return `${days} day${days === 1 ? "" : "s"} ago`;
+}
 
 function TrendChip({ changeType, change }: { changeType: "positive" | "negative"; change: string }) {
   const isFlat = change.trim() === "0" || change.trim() === "0%";
@@ -347,11 +359,16 @@ export function DashboardHome() {
           }
         }
 
-        const activityRes = await apiFetch("dashboard/activity/");
+        const activityRes = await apiFetch("dashboard/recent-activity/");
         if (activityRes.ok) {
           const activityData = await activityRes.json();
           if (activityData.activities) {
-            setRecentActivity(activityData.activities);
+            setRecentActivity(
+              activityData.activities.map((a: ActivityItem) => ({
+                ...a,
+                timestamp: formatRelativeTime(a.timestamp),
+              })),
+            );
           }
         }
       } catch (err) {
@@ -643,9 +660,9 @@ export function DashboardHome() {
                         {!isLast && <div className="w-px h-full my-1" style={{ backgroundColor: gb.secondaryTextVariant }} />}
                       </div>
                       <div className="pb-2">
-                        <p className="text-sm font-medium leading-tight" style={{ color: gb.primary }}>{activity.action}</p>
+                        <p className="text-sm font-medium leading-tight" style={{ color: gb.primary }}>{activity.title}</p>
                         <p className="text-xs mt-1" style={{ color: gb.secondary }}>{activity.description}</p>
-                        <p className="font-mono text-[10px] mt-2" style={{ color: gb.secondaryText }}>{activity.time}</p>
+                        <p className="font-mono text-[10px] mt-2" style={{ color: gb.secondaryText }}>{activity.timestamp}</p>
                       </div>
                     </div>
                   );

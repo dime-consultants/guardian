@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useTheme } from "next-themes";
+import { toast } from "sonner";
 import {
   Settings,
   User,
@@ -39,10 +40,50 @@ import { useApp } from "@/contexts/app-context";
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { demoMode, setDemoMode, backendConnected, backendUrl, setBackendUrl } = useApp();
+  const { demoMode, setDemoMode, backendConnected, backendUrl, setBackendUrl, user, updateUserProfile } = useApp();
   const [tempBackendUrl, setTempBackendUrl] = useState(backendUrl);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionTestResult, setConnectionTestResult] = useState<"success" | "error" | null>(null);
+
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [email, setEmail] = useState("");
+  const [department, setDepartment] = useState("");
+  const [phone, setPhone] = useState("");
+  const [isSavingProfile, setIsSavingProfile] = useState(false);
+  const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    setFirstName(user.first_name ?? "");
+    setLastName(user.last_name ?? "");
+    setEmail(user.email ?? "");
+    setDepartment(user.department ?? "");
+    setPhone(user.phone ?? "");
+  }, [user]);
+
+  const profileUnchanged =
+    !!user &&
+    firstName === (user.first_name ?? "") &&
+    lastName === (user.last_name ?? "") &&
+    email === (user.email ?? "") &&
+    department === (user.department ?? "") &&
+    phone === (user.phone ?? "");
+
+  const saveProfile = async () => {
+    setIsSavingProfile(true);
+    setProfileSaveError(null);
+    try {
+      await updateUserProfile({ first_name: firstName, last_name: lastName, email, department, phone });
+      toast.success("Profile updated");
+    } catch (e) {
+      const message = e instanceof Error ? e.message : String(e);
+      setProfileSaveError(message);
+      toast.error("Failed to update profile", { description: message });
+    } finally {
+      setIsSavingProfile(false);
+    }
+  };
 
   const testConnection = async () => {
     setIsTestingConnection(true);
@@ -201,30 +242,44 @@ export function SettingsPage() {
               <CardDescription>Manage your account information</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
-              <div className="grid gap-4 sm:grid-cols-2">
+              <div className="grid gap-4 sm:grid-cols-3">
                 <div className="space-y-2">
-                  <Label htmlFor="name">Display Name</Label>
-                  <Input id="name" defaultValue="Finance Team" />
+                  <Label htmlFor="first-name">First Name</Label>
+                  <Input id="first-name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="last-name">Last Name</Label>
+                  <Input id="last-name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
                 </div>
                 <div className="space-y-2">
                   <Label htmlFor="email">Email Address</Label>
-                  <Input id="email" defaultValue="finance@kuehne-nagel.com" />
+                  <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} />
                 </div>
               </div>
-              <div className="space-y-2">
-                <Label htmlFor="department">Department</Label>
-                <Select defaultValue="finance">
-                  <SelectTrigger id="department">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="finance">Finance</SelectItem>
-                    <SelectItem value="accounts">Accounts</SelectItem>
-                    <SelectItem value="tax">Tax</SelectItem>
-                    <SelectItem value="operations">Operations</SelectItem>
-                  </SelectContent>
-                </Select>
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div className="space-y-2">
+                  <Label htmlFor="department">Department</Label>
+                  <Input id="department" value={department} onChange={(e) => setDepartment(e.target.value)} />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="phone">Phone</Label>
+                  <Input id="phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                </div>
               </div>
+              {profileSaveError && (
+                <p className="text-sm text-[#ef4444] dark:text-red-400">{profileSaveError}</p>
+              )}
+              <Button
+                onClick={saveProfile}
+                disabled={isSavingProfile || profileUnchanged}
+              >
+                {isSavingProfile ? (
+                  <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="h-4 w-4 mr-2" />
+                )}
+                Save Profile
+              </Button>
             </CardContent>
           </Card>
 

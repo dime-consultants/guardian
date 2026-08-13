@@ -247,6 +247,76 @@ export interface ValidateResponse {
 }
 
 // =============================================================================
+// Custom Tools (user-defined webhook / prompt_transform tools)
+// =============================================================================
+
+export type CustomToolCategory =
+  | "extraction"
+  | "transformation"
+  | "reconciliation"
+  | "analysis"
+  | "report"
+  | "utility";
+
+export type CustomToolType = "webhook" | "prompt_transform";
+
+export interface CustomToolConfig {
+  webhook_url: string;
+  webhook_method: "POST" | "GET";
+  webhook_headers: Record<string, string>;
+  webhook_timeout_seconds: number;
+  system_prompt: string;
+  output_schema: Record<string, unknown> | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomTool {
+  id: number;
+  name: string;
+  display_name: string;
+  description: string;
+  category: CustomToolCategory;
+  category_display: string;
+  tool_type: CustomToolType;
+  tool_type_display: string;
+  parameters_schema: Record<string, unknown>;
+  version: number;
+  enabled: boolean;
+  is_safe: boolean;
+  grok_schema: Record<string, unknown>;
+  config: CustomToolConfig | null;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface CustomToolCreatePayload {
+  name: string;
+  display_name: string;
+  description: string;
+  category?: CustomToolCategory;
+  tool_type: CustomToolType;
+  parameters_schema?: Record<string, unknown>;
+  is_safe?: boolean;
+  webhook_url?: string;
+  webhook_method?: "POST" | "GET";
+  webhook_headers?: Record<string, string>;
+  webhook_timeout_seconds?: number;
+  system_prompt?: string;
+  output_schema?: Record<string, unknown> | null;
+}
+
+export type CustomToolUpdatePayload = Partial<
+  Omit<CustomToolCreatePayload, "name" | "tool_type">
+>;
+
+export interface CustomToolTestResponse {
+  tool_call_id: number;
+  duration_ms: number;
+  result: { ok: boolean; error?: string; [key: string]: unknown };
+}
+
+// =============================================================================
 // Reports
 // =============================================================================
 
@@ -392,7 +462,10 @@ export interface ApiEndpoints {
   toolsConvert: "/api/tools/convert";
   toolsClean: "/api/tools/clean";
   toolsValidate: "/api/tools/validate";
-  
+  customTools: "/api/tools/custom";
+  customToolDetail: "/api/tools/custom/:id";
+  customToolTest: "/api/tools/custom/:id/test";
+
   // Reports
   reports: "/api/reports";
   reportsGenerate: "/api/reports/generate";

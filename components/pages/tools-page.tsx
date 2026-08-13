@@ -27,28 +27,26 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
-import { Textarea } from "@/components/ui/textarea";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApp } from "@/contexts/app-context";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-
-interface JSONSchemaProperty {
-  type?: string;
-  description?: string;
-  enum?: (string | number)[];
-  default?: unknown;
-}
-
-interface JSONSchema {
-  type?: string;
-  properties?: Record<string, JSONSchemaProperty>;
-  required?: string[];
-}
+import { type JSONSchema, type JSONSchemaProperty, renderSchemaInput } from "@/lib/json-schema-form";
+import { CustomToolBuilderDialog } from "@/components/tools/custom-tool-builder-dialog";
+import type { CustomTool } from "@/types/api";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
+import { Plus, Pencil, Trash2, FlaskConical } from "lucide-react";
 
 interface BackendTool {
   id: number;
@@ -193,83 +191,6 @@ function formatLastRun(tool: BackendTool) {
   }
 }
 
-/**
- * Renders one form control for a tool's JSON Schema property — driven
- * entirely by what the backend's ToolDefinition.parameters_schema declares,
- * so new tools/parameters don't need frontend changes to become runnable.
- */
-function renderSchemaInput(
-  argKey: string,
-  schema: JSONSchemaProperty,
-  value: unknown,
-  onChange: (v: unknown) => void,
-) {
-  const id = `arg-${argKey}`;
-
-  if (schema.enum && schema.enum.length > 0) {
-    return (
-      <Select value={value != null ? String(value) : ""} onValueChange={onChange}>
-        <SelectTrigger id={id}>
-          <SelectValue placeholder={`Select ${argKey}`} />
-        </SelectTrigger>
-        <SelectContent>
-          {schema.enum.map((opt) => (
-            <SelectItem key={String(opt)} value={String(opt)}>{String(opt)}</SelectItem>
-          ))}
-        </SelectContent>
-      </Select>
-    );
-  }
-
-  if (schema.type === "boolean") {
-    return (
-      <div className="flex items-center gap-2 h-9">
-        <Checkbox id={id} checked={!!value} onCheckedChange={(v) => onChange(!!v)} />
-        <Label htmlFor={id} className="text-xs font-normal text-muted-foreground">Enabled</Label>
-      </div>
-    );
-  }
-
-  if (schema.type === "integer" || schema.type === "number") {
-    return (
-      <Input
-        id={id}
-        type="number"
-        value={value === undefined || value === null ? "" : String(value)}
-        onChange={(e) => {
-          const raw = e.target.value;
-          onChange(raw === "" ? undefined : (schema.type === "integer" ? parseInt(raw, 10) : parseFloat(raw)));
-        }}
-      />
-    );
-  }
-
-  if (schema.type === "object" || schema.type === "array") {
-    return (
-      <Textarea
-        id={id}
-        rows={3}
-        placeholder="JSON"
-        className="font-mono text-xs"
-        value={value === undefined ? "" : JSON.stringify(value)}
-        onChange={(e) => {
-          const raw = e.target.value;
-          if (!raw.trim()) { onChange(undefined); return; }
-          try { onChange(JSON.parse(raw)); } catch { onChange(raw); }
-        }}
-      />
-    );
-  }
-
-  return (
-    <Input
-      id={id}
-      value={value === undefined || value === null ? "" : String(value)}
-      onChange={(e) => onChange(e.target.value)}
-    />
-  );
-}
-
 export function ToolsPage() {
   const { demoMode, backendConnected, apiFetch, setBackendConnected } = useApp();
   const [tools, setTools] = useState<ToolCard[]>(demoMode ? demoTools : []);
@@ -285,6 +206,23 @@ export function ToolsPage() {
   const [runArgs, setRunArgs] = useState<Record<string, unknown>>({});
   const [runResult, setRunResult] = useState<any>(null);
   const [runError, setRunError] = useState<string | null>(null);
+
+  // Custom (user-defined) tools.
+  const [customTools, setCustomTools] = useState<CustomTool[]>([]);
+  const [isLoadingCustom, setIsLoadingCustom] = useState(false);
+  const [customToolsError, setCustomToolsError] = useState<string | null>(null);
+  const [builderOpen, setBuilderOpen] = useState(false);
+  const [editingTool, setEditingTool] = useState<CustomTool | null>(null);
+  const [deletingTool, setDeletingTool] = useState<CustomTool | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  // Custom tool Test dialog — mirrors the built-in Run dialog above, but
+  // calls POST tools/custom/<id>/test/ instead of tools/run/.
+  const [testDialogTool, setTestDialogTool] = useState<CustomTool | null>(null);
+  const [testArgs, setTestArgs] = useState<Record<string, unknown>>({});
+  const [testResult, setTestResult] = useState<any>(null);
+  const [testError, setTestError] = useState<string | null>(null);
+  const [isTesting, setIsTesting] = useState(false);
 
   useEffect(() => {
     if (demoMode) {
@@ -376,6 +314,87 @@ export function ToolsPage() {
 
     loadTools();
   }, [apiFetch, backendConnected, demoMode, setBackendConnected]);
+
+  const loadCustomTools = async () => {
+    if (demoMode || !apiFetch) {
+      setCustomTools([]);
+      return;
+    }
+    setIsLoadingCustom(true);
+    setCustomToolsError(null);
+    try {
+      const resp = await apiFetch("tools/custom/");
+      const payload = await resp.json().catch(() => null);
+      if (!resp.ok) {
+        throw new Error(payload?.detail || payload?.error || "Failed to load custom tools.");
+      }
+      setCustomTools(normalizeToolResponse(payload) as unknown as CustomTool[]);
+    } catch (err) {
+      setCustomToolsError(err instanceof Error ? err.message : String(err));
+      setCustomTools([]);
+    } finally {
+      setIsLoadingCustom(false);
+    }
+  };
+
+  useEffect(() => {
+    loadCustomTools();
+  }, [apiFetch, demoMode]);
+
+  const deleteCustomTool = async () => {
+    if (!apiFetch || !deletingTool) return;
+    setIsDeleting(true);
+    try {
+      const resp = await apiFetch(`tools/custom/${deletingTool.id}/`, { method: "DELETE" });
+      if (!resp.ok && resp.status !== 204) {
+        const payload = await resp.json().catch(() => null);
+        throw new Error(payload?.detail || "Failed to disable tool.");
+      }
+      toast.success("Custom tool disabled");
+      setDeletingTool(null);
+      loadCustomTools();
+    } catch (err) {
+      toast.error("Error", { description: err instanceof Error ? err.message : String(err) });
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  const testCustomTool = async (tool: CustomTool, args: Record<string, unknown>) => {
+    if (!apiFetch) return;
+    setIsTesting(true);
+    setTestError(null);
+    setTestResult(null);
+    try {
+      const resp = await apiFetch(`tools/custom/${tool.id}/test/`, {
+        method: "POST",
+        body: { arguments: args },
+      });
+      const data = await resp.json().catch(() => ({}));
+      if (!resp.ok) {
+        throw new Error(data?.error || data?.detail || "Failed to test tool");
+      }
+      setTestResult(data.result ?? null);
+      if (data.result && data.result.ok === false) {
+        toast.error("Test failed", { description: data.result.error || "Unknown error" });
+      } else {
+        toast.success("Test succeeded", { description: `${tool.display_name} ran successfully.` });
+      }
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setTestError(msg);
+      toast.error("Error", { description: msg });
+    } finally {
+      setIsTesting(false);
+    }
+  };
+
+  const openTestDialog = (tool: CustomTool) => {
+    setTestDialogTool(tool);
+    setTestArgs({});
+    setTestResult(null);
+    setTestError(null);
+  };
 
   const categories = [
     "All",
@@ -611,6 +630,91 @@ export function ToolsPage() {
         </>
       )}
 
+      {/* ===== My Custom Tools ===== */}
+      {!demoMode && (
+        <div>
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-xl font-semibold text-[#2B2B2B]">My Custom Tools</h3>
+              <p className="text-sm text-[#6B7280]">Webhook or LLM-prompt tools you've defined yourself.</p>
+            </div>
+            <Button size="sm" onClick={() => { setEditingTool(null); setBuilderOpen(true); }}>
+              <Plus className="h-4 w-4 mr-1.5" />
+              New Tool
+            </Button>
+          </div>
+
+          {isLoadingCustom ? (
+            <Card className="border-[#E5E7EB] bg-white p-8">
+              <div className="flex items-center justify-center gap-3 text-[#6B7280]">
+                <Loader2 className="h-5 w-5 animate-spin" />
+                Loading custom tools...
+              </div>
+            </Card>
+          ) : customToolsError ? (
+            <Card className="border-[#E5E7EB] bg-white p-6">
+              <p className="text-sm text-[#6B7280]">{customToolsError}</p>
+            </Card>
+          ) : customTools.length === 0 ? (
+            <Card className="border-[#E5E7EB] bg-white p-8">
+              <div className="space-y-3 text-center">
+                <h4 className="text-sm font-semibold text-[#2B2B2B]">You haven't created any custom tools yet</h4>
+                <Button size="sm" variant="outline" onClick={() => { setEditingTool(null); setBuilderOpen(true); }}>
+                  <Plus className="h-4 w-4 mr-1.5" />
+                  New Tool
+                </Button>
+              </div>
+            </Card>
+          ) : (
+            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+              {customTools.map((tool) => (
+                <Card key={tool.id} className="border-[#E5E7EB] bg-white p-3 gap-2">
+                  <CardHeader className="p-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <div>
+                        <CardTitle className="text-sm text-[#2B2B2B] leading-snug">{tool.display_name}</CardTitle>
+                        <div className="text-xs text-[#6B7280]">{tool.category_display} &middot; {tool.tool_type_display}</div>
+                      </div>
+                      <div className="flex flex-col items-end gap-1 flex-shrink-0">
+                        <Badge variant="secondary" className="text-xs">{tool.enabled ? "enabled" : "disabled"}</Badge>
+                        {!tool.is_safe && <Badge variant="outline" className="text-[10px] text-[#6B7280]">Unsafe</Badge>}
+                      </div>
+                    </div>
+                  </CardHeader>
+                  <CardContent className="p-0 space-y-3">
+                    <p className="text-xs text-[#6B7280] line-clamp-2">{tool.description}</p>
+                    <div className="flex items-center gap-1.5">
+                      <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => openTestDialog(tool)}>
+                        <FlaskConical className="h-3 w-3 mr-1" />
+                        Test
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs px-2"
+                        onClick={() => { setEditingTool(tool); setBuilderOpen(true); }}
+                      >
+                        <Pencil className="h-3 w-3 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs px-2 text-destructive hover:text-destructive"
+                        onClick={() => setDeletingTool(tool)}
+                      >
+                        <Trash2 className="h-3 w-3 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+
       <Dialog
         open={!!runDialogTool}
         onOpenChange={(open) => { if (!open) setRunDialogTool(null); }}
@@ -700,6 +804,136 @@ export function ToolsPage() {
           })()}
         </DialogContent>
       </Dialog>
+
+      {/* Custom tool Test dialog — same schema-driven form as the built-in
+          Run dialog above, pointed at POST tools/custom/<id>/test/. Unlike
+          the Run button, this is never gated on is_safe: the backend
+          explicitly bypasses that check because the user is testing their
+          own tool. */}
+      <Dialog
+        open={!!testDialogTool}
+        onOpenChange={(open) => { if (!open) setTestDialogTool(null); }}
+      >
+        <DialogContent className="sm:max-w-lg">
+          {testDialogTool && (() => {
+            const schema = testDialogTool.parameters_schema as JSONSchema | undefined;
+            const properties = schema?.properties || {};
+            const required = schema?.required || [];
+            const missingRequired = required.filter((k) => {
+              const v = testArgs[k];
+              return v === undefined || v === null || v === "";
+            });
+
+            return (
+              <>
+                <DialogHeader>
+                  <DialogTitle className="flex items-center gap-2">
+                    <FlaskConical className="h-4 w-4 text-[#0D3B8E]" />
+                    Test {testDialogTool.display_name}
+                  </DialogTitle>
+                  <DialogDescription>{testDialogTool.description}</DialogDescription>
+                </DialogHeader>
+
+                <ScrollArea className="max-h-[45vh] pr-3">
+                  <div className="space-y-4 py-1">
+                    {Object.keys(properties).length === 0 && (
+                      <p className="text-xs text-muted-foreground">This tool takes no arguments.</p>
+                    )}
+                    {Object.entries(properties).map(([key, propSchema]) => (
+                      <div key={key} className="space-y-1.5">
+                        <Label htmlFor={`arg-${key}`} className="text-xs font-medium">
+                          {key}
+                          {required.includes(key) && <span className="text-destructive"> *</span>}
+                        </Label>
+                        {renderSchemaInput(key, propSchema, testArgs[key], (v) =>
+                          setTestArgs((prev) => ({ ...prev, [key]: v }))
+                        )}
+                        {propSchema.description && (
+                          <p className="text-xs text-muted-foreground">{propSchema.description}</p>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                </ScrollArea>
+
+                {testResult && (
+                  <div
+                    className={cn(
+                      "rounded-lg border p-3 text-xs space-y-1.5 max-h-40 overflow-auto",
+                      testResult.ok === false
+                        ? "border-destructive/30 bg-destructive/5"
+                        : "border-green-500/30 bg-green-50 dark:bg-green-950/20",
+                    )}
+                  >
+                    <div className="flex items-center gap-1.5 font-medium">
+                      {testResult.ok === false ? (
+                        <XCircle className="h-3.5 w-3.5 text-destructive" />
+                      ) : (
+                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
+                      )}
+                      {testResult.ok === false ? "Failed" : "Result"}
+                    </div>
+                    <pre className="whitespace-pre-wrap break-words font-mono">
+                      {JSON.stringify(testResult, null, 2)}
+                    </pre>
+                  </div>
+                )}
+                {testError && <p className="text-xs text-destructive">{testError}</p>}
+
+                <DialogFooter className="gap-2 sm:gap-2">
+                  <Button variant="outline" onClick={() => setTestDialogTool(null)}>
+                    Close
+                  </Button>
+                  <Button
+                    onClick={() => testCustomTool(testDialogTool, testArgs)}
+                    disabled={isTesting || missingRequired.length > 0}
+                    title={missingRequired.length > 0 ? `Missing required: ${missingRequired.join(", ")}` : undefined}
+                  >
+                    {isTesting ? (
+                      <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                    ) : (
+                      <FlaskConical className="h-3.5 w-3.5 mr-1.5" />
+                    )}
+                    Run Test
+                  </Button>
+                </DialogFooter>
+              </>
+            );
+          })()}
+        </DialogContent>
+      </Dialog>
+
+      <CustomToolBuilderDialog
+        open={builderOpen}
+        onOpenChange={setBuilderOpen}
+        initialTool={editingTool}
+        onSaved={() => {
+          loadCustomTools();
+          toast.success(editingTool ? "Tool updated" : "Tool created");
+        }}
+      />
+
+      <AlertDialog open={!!deletingTool} onOpenChange={(open) => { if (!open) setDeletingTool(null); }}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>Disable Custom Tool</AlertDialogTitle>
+            <AlertDialogDescription>
+              This will disable {deletingTool?.display_name}; it can be re-enabled later via edit.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={deleteCustomTool}
+              disabled={isDeleting}
+              className="bg-destructive text-white hover:bg-destructive/90"
+            >
+              {isDeleting && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+              Disable
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   );
 }

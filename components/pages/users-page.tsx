@@ -87,6 +87,8 @@ interface User {
   date_joined: string;
   is_superuser?: boolean;
   is_staff?: boolean;
+  organization?: number | null;
+  organization_name?: string | null;
 }
 
 interface UserFormData {
@@ -810,6 +812,11 @@ const UsersPage = () => {
                         <span className="flex items-center gap-1">
                           <Building2 className="h-3 w-3" />
                           {user.department}
+                        </span>
+                      )}
+                      {user.organization_name && (
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#EEF2F7] text-[#0D3B8E]">
+                          {user.organization_name}
                         </span>
                       )}
                       <span className="flex items-center gap-1">

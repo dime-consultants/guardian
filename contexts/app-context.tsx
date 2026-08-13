@@ -22,6 +22,20 @@ interface User {
   avatar?: string;
   role?: string;
   username?: string;
+  first_name?: string;
+  last_name?: string;
+  department?: string;
+  phone?: string;
+  organization?: number | null;
+  organization_name?: string | null;
+}
+
+interface ProfileUpdatePayload {
+  first_name?: string;
+  last_name?: string;
+  email?: string;
+  department?: string;
+  phone?: string;
 }
 
 interface SignupPayload {
@@ -43,6 +57,7 @@ interface AppContextType {
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
+  updateUserProfile: (patch: ProfileUpdatePayload) => Promise<User>;
    apiFetch: (
      path: string,
      options?: { method?: string; body?: any; _retry?: boolean; signal?: AbortSignal },
@@ -212,7 +227,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (demoMode) return;
 
     try {
-      const response = await apiFetch("auth/profile/", { signal });
+      const response = await apiFetch("auth/me/", { signal });
 
       if (response.ok) {
         const data = await response.json();
@@ -232,6 +247,42 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUserState(null);
       setIsAuthenticated(false);
     }
+  };
+
+  // Update profile fields (PATCH /api/auth/me/)
+  const updateUserProfile = async (
+    patch: ProfileUpdatePayload,
+  ): Promise<User> => {
+    const response = await apiFetch("auth/me/", {
+      method: "PATCH",
+      body: patch,
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      const firstFieldError = Object.values(errorData)[0];
+      throw new Error(
+        errorData.detail ||
+          (Array.isArray(firstFieldError) ? firstFieldError[0] : undefined) ||
+          "Failed to update profile.",
+      );
+    }
+
+    const data = await response.json();
+    // UserProfileSerializer (PATCH response) omits name/role/status/lastActive —
+    // merge onto existing state instead of replacing it, and recompute `name`
+    // the same way the backend's UserSerializer.get_name() does.
+    const updated: User = {
+      ...user,
+      ...data,
+      name:
+        [data.first_name, data.last_name].filter(Boolean).join(" ") ||
+        data.username ||
+        user?.name ||
+        "",
+    };
+    setUserState(updated);
+    return updated;
   };
 
   // Login function
@@ -434,6 +485,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         logout,
         setUser,
         fetchUserProfile,
+        updateUserProfile,
         apiFetch,
         demoMode,
         setDemoMode,
