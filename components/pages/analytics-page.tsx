@@ -83,13 +83,13 @@ const demoOverview: AnalyticsOverviewResponse = {
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-muted mb-4">
-        <Server className="h-10 w-10 text-muted-foreground" />
+      <div className="p-4 rounded-full bg-[#EEF2F7] mb-4">
+        <Server className="h-10 w-10 text-[#6B7280]" />
       </div>
-      <h3 className="text-xl font-semibold text-foreground mb-2">
+      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">
         Awaiting Backend Connection
       </h3>
-      <p className="text-muted-foreground text-center max-w-md mb-6">
+      <p className="text-[#6B7280] text-center max-w-md mb-6">
         Connect to your Django backend to view analytics data, or enable Demo Mode to preview with sample data.
       </p>
       <Link href="/settings">
@@ -205,11 +205,11 @@ export function AnalyticsPage() {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
-            <BarChart3 className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
+            <BarChart3 className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
             Analytics
           </h2>
-          <p className="text-muted-foreground mt-1 text-sm md:text-base line-clamp-2">
+          <p className="text-[#6B7280] mt-1 text-sm md:text-base line-clamp-2">
             Performance metrics, automation efficiency, and processing insights.
           </p>
         </div>
@@ -220,7 +220,7 @@ export function AnalyticsPage() {
             </Badge>
           )}
           {!demoMode && !backendConnected && (
-            <Badge variant="secondary" className="bg-muted text-muted-foreground">
+            <Badge variant="secondary" className="bg-[#EEF2F7] text-[#6B7280]">
               No Data Source
             </Badge>
           )}
@@ -245,24 +245,24 @@ export function AnalyticsPage() {
       </div>
 
       {showEmptyState ? (
-        <Card className="border-border bg-card">
+        <Card className="border-[#E5E7EB] bg-white">
           <AwaitingBackendState />
         </Card>
       ) : isLoading ? (
-        <Card className="border-border bg-card p-10">
+        <Card className="border-[#E5E7EB] bg-white p-10">
           <div className="flex flex-col items-center justify-center gap-4 text-center">
-            <Loader2 className="h-8 w-8 animate-spin text-primary" />
+            <Loader2 className="h-8 w-8 animate-spin text-[#0D3B8E]" />
             <div>
-              <h3 className="text-lg font-semibold text-foreground">Loading analytics</h3>
-              <p className="text-sm text-muted-foreground">Fetching metrics from the backend dashboard.</p>
+              <h3 className="text-lg font-semibold text-[#2B2B2B]">Loading analytics</h3>
+              <p className="text-sm text-[#6B7280]">Fetching metrics from the backend dashboard.</p>
             </div>
           </div>
         </Card>
       ) : error ? (
-        <Card className="border-border bg-card p-8">
+        <Card className="border-[#E5E7EB] bg-white p-8">
           <div className="space-y-3 text-center">
-            <h3 className="text-lg font-semibold text-foreground">Unable to load analytics</h3>
-            <p className="text-sm text-muted-foreground">{error}</p>
+            <h3 className="text-lg font-semibold text-[#2B2B2B]">Unable to load analytics</h3>
+            <p className="text-sm text-[#6B7280]">{error}</p>
             <Link href="/settings">
               <Button variant="outline">Verify backend settings</Button>
             </Link>
@@ -272,63 +272,63 @@ export function AnalyticsPage() {
         <>
           {/* KPI Cards */}
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:grid-cols-4">
-            <Card className="border-border bg-card p-4 gap-1">
+            <Card className="border-[#E5E7EB] bg-white p-4 gap-1">
               <CardHeader className="p-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-[#6B7280]">
                   Processing Efficiency
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{processingEfficiency}%</div>
+                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{processingEfficiency}%</div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <TrendingUp className="h-3 w-3 text-chart-3 flex-shrink-0" />
                   <span className="text-xs text-chart-3">{accuracyChange >= 0 ? `+${accuracyChange}%` : `${accuracyChange}%`}</span>
-                  <span className="text-xs text-muted-foreground">vs prior</span>
+                  <span className="text-xs text-[#6B7280]">vs prior</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border bg-card p-4 gap-1">
+            <Card className="border-[#E5E7EB] bg-white p-4 gap-1">
               <CardHeader className="p-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-[#6B7280]">
                   Time Saved
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{formatMinutes(timeSaved)}</div>
+                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{formatMinutes(timeSaved)}</div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <Clock className="h-3 w-3 text-chart-1 flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">Automated</span>
+                  <span className="text-xs text-[#6B7280]">Automated</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border bg-card p-4 gap-1">
+            <Card className="border-[#E5E7EB] bg-white p-4 gap-1">
               <CardHeader className="p-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-[#6B7280]">
                   Invoices Processed
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{invoicesProcessed.toLocaleString()}</div>
+                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{invoicesProcessed.toLocaleString()}</div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <FileText className="h-3 w-3 text-chart-3 flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">Total in period</span>
+                  <span className="text-xs text-[#6B7280]">Total in period</span>
                 </div>
               </CardContent>
             </Card>
 
-            <Card className="border-border bg-card p-4 gap-1">
+            <Card className="border-[#E5E7EB] bg-white p-4 gap-1">
               <CardHeader className="p-0">
-                <CardTitle className="text-sm font-medium text-muted-foreground">
+                <CardTitle className="text-sm font-medium text-[#6B7280]">
                   Manual Invoices
                 </CardTitle>
               </CardHeader>
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-card-foreground">{manualInvoices.toLocaleString()}</div>
+                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{manualInvoices.toLocaleString()}</div>
                 <div className="flex items-center gap-1 mt-0.5">
                   <AlertTriangle className="h-3 w-3 text-chart-5 flex-shrink-0" />
-                  <span className="text-xs text-muted-foreground">Manual needed</span>
+                  <span className="text-xs text-[#6B7280]">Manual needed</span>
                 </div>
               </CardContent>
             </Card>
@@ -336,9 +336,9 @@ export function AnalyticsPage() {
 
           {/* Charts Row */}
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-border bg-card">
+            <Card className="border-[#E5E7EB] bg-white">
               <CardHeader>
-                <CardTitle className="text-card-foreground">Processing Trend</CardTitle>
+                <CardTitle className="text-[#2B2B2B]">Processing Trend</CardTitle>
                 <CardDescription>Daily invoice volume over time</CardDescription>
               </CardHeader>
               <CardContent>
@@ -375,9 +375,9 @@ export function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-border bg-card">
+            <Card className="border-[#E5E7EB] bg-white">
               <CardHeader>
-                <CardTitle className="text-card-foreground">Accuracy Trend</CardTitle>
+                <CardTitle className="text-[#2B2B2B]">Accuracy Trend</CardTitle>
                 <CardDescription>Daily processing accuracy over time</CardDescription>
               </CardHeader>
               <CardContent>
@@ -418,9 +418,9 @@ export function AnalyticsPage() {
 
           {/* Bottom Row */}
           <div className="grid gap-4 lg:grid-cols-2">
-            <Card className="border-border bg-card">
+            <Card className="border-[#E5E7EB] bg-white">
               <CardHeader>
-                <CardTitle className="text-card-foreground">Current Accuracy</CardTitle>
+                <CardTitle className="text-[#2B2B2B]">Current Accuracy</CardTitle>
                 <CardDescription>Percentage of jobs completed successfully</CardDescription>
               </CardHeader>
               <CardContent>
@@ -455,7 +455,7 @@ export function AnalyticsPage() {
                   {accuracyPieData.map((item) => (
                     <div key={item.name} className="flex items-center gap-2">
                       <div className="h-3 w-3 rounded-full" style={{ backgroundColor: item.color }} />
-                      <span className="text-xs text-muted-foreground">
+                      <span className="text-xs text-[#6B7280]">
                         {item.name}: {item.value}%
                       </span>
                     </div>
@@ -464,33 +464,33 @@ export function AnalyticsPage() {
               </CardContent>
             </Card>
 
-            <Card className="border-border bg-card">
+            <Card className="border-[#E5E7EB] bg-white">
               <CardHeader>
-                <CardTitle className="text-card-foreground">Category Breakdown</CardTitle>
+                <CardTitle className="text-[#2B2B2B]">Category Breakdown</CardTitle>
                 <CardDescription>Top invoice categories from the backend</CardDescription>
               </CardHeader>
               <CardContent>
                 <div className="space-y-4">
                   {categoryBreakdown.length === 0 ? (
-                    <p className="text-sm text-muted-foreground">No category breakdown data available.</p>
+                    <p className="text-sm text-[#6B7280]">No category breakdown data available.</p>
                   ) : (
                     categoryBreakdown.map((item) => {
                       const maxCount = Math.max(...categoryBreakdown.map((row) => row.count), 1);
                       return (
                         <div key={item.category} className="flex items-center gap-4">
-                          <div className="w-28 text-sm font-medium text-card-foreground">
+                          <div className="w-28 text-sm font-medium text-[#2B2B2B]">
                             {item.category}
                           </div>
                           <div className="flex-1">
-                            <div className="h-2 bg-muted rounded-full overflow-hidden">
+                            <div className="h-2 bg-[#EEF2F7] rounded-full overflow-hidden">
                               <div
-                                className="h-full bg-primary rounded-full"
+                                className="h-full bg-[#0D3B8E] rounded-full"
                                 style={{ width: `${(item.count / maxCount) * 100}%` }}
                               />
                             </div>
                           </div>
                           <div className="text-right">
-                            <p className="text-sm font-medium text-card-foreground">
+                            <p className="text-sm font-medium text-[#2B2B2B]">
                               {item.count.toLocaleString()} files
                             </p>
                           </div>

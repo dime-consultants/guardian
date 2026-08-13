@@ -16,8 +16,8 @@ export const viewport = {
 }
 
 export const metadata: Metadata = {
-  title: 'Guardian Bank',
-  description: 'Guardian Bank secure online portal for customers, account access, and banking workflows',
+  title: 'Guardian Financial Tool',
+  description: 'Guardian Financial Tool for loan reconciliation, arrears verification, and account scrutiny',
   icons: {
     icon: [
       {
@@ -40,7 +40,12 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body className="font-sans antialiased bg-background">
+      <head>
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+      </head>
+      <body className="font-sans antialiased bg-[#F8F9FB]">
         <ThemeProvider
           attribute="class"
           defaultTheme="light"
