@@ -12,8 +12,6 @@ import {
   Server,
   Clock,
   Play,
-  CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -27,13 +25,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Label } from "@/components/ui/label";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useApp } from "@/contexts/app-context";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import { type JSONSchema, type JSONSchemaProperty, renderSchemaInput } from "@/lib/json-schema-form";
+import { type JSONSchema, type JSONSchemaProperty } from "@/lib/json-schema-form";
+import { ToolRunForm, missingRequiredArgs } from "@/components/tool-run-form";
 import { CustomToolBuilderDialog } from "@/components/tools/custom-tool-builder-dialog";
 import type { CustomTool } from "@/types/api";
 import {
@@ -723,10 +721,7 @@ export function ToolsPage() {
           {runDialogTool && (() => {
             const properties = runDialogTool.parametersSchema?.properties || {};
             const required = runDialogTool.parametersSchema?.required || [];
-            const missingRequired = required.filter((k) => {
-              const v = runArgs[k];
-              return v === undefined || v === null || v === "";
-            });
+            const missingRequired = missingRequiredArgs(required, runArgs);
             const isRunning = runningTool === String(runDialogTool.id);
 
             return (
@@ -740,47 +735,15 @@ export function ToolsPage() {
                 </DialogHeader>
 
                 <ScrollArea className="max-h-[45vh] pr-3">
-                  <div className="space-y-4 py-1">
-                    {Object.entries(properties).map(([key, schema]) => (
-                      <div key={key} className="space-y-1.5">
-                        <Label htmlFor={`arg-${key}`} className="text-xs font-medium">
-                          {key}
-                          {required.includes(key) && <span className="text-destructive"> *</span>}
-                        </Label>
-                        {renderSchemaInput(key, schema, runArgs[key], (v) =>
-                          setRunArgs((prev) => ({ ...prev, [key]: v }))
-                        )}
-                        {schema.description && (
-                          <p className="text-xs text-muted-foreground">{schema.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <ToolRunForm
+                    properties={properties}
+                    required={required}
+                    args={runArgs}
+                    onArgChange={(key, v) => setRunArgs((prev) => ({ ...prev, [key]: v }))}
+                    result={runResult}
+                    error={runError}
+                  />
                 </ScrollArea>
-
-                {runResult && (
-                  <div
-                    className={cn(
-                      "rounded-lg border p-3 text-xs space-y-1.5 max-h-40 overflow-auto",
-                      runResult.ok === false
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-green-500/30 bg-green-50 dark:bg-green-950/20",
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 font-medium">
-                      {runResult.ok === false ? (
-                        <XCircle className="h-3.5 w-3.5 text-destructive" />
-                      ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                      )}
-                      {runResult.ok === false ? "Failed" : "Result"}
-                    </div>
-                    <pre className="whitespace-pre-wrap break-words font-mono">
-                      {JSON.stringify(runResult, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                {runError && <p className="text-xs text-destructive">{runError}</p>}
 
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setRunDialogTool(null)}>
@@ -819,10 +782,7 @@ export function ToolsPage() {
             const schema = testDialogTool.parameters_schema as JSONSchema | undefined;
             const properties = schema?.properties || {};
             const required = schema?.required || [];
-            const missingRequired = required.filter((k) => {
-              const v = testArgs[k];
-              return v === undefined || v === null || v === "";
-            });
+            const missingRequired = missingRequiredArgs(required, testArgs);
 
             return (
               <>
@@ -835,50 +795,15 @@ export function ToolsPage() {
                 </DialogHeader>
 
                 <ScrollArea className="max-h-[45vh] pr-3">
-                  <div className="space-y-4 py-1">
-                    {Object.keys(properties).length === 0 && (
-                      <p className="text-xs text-muted-foreground">This tool takes no arguments.</p>
-                    )}
-                    {Object.entries(properties).map(([key, propSchema]) => (
-                      <div key={key} className="space-y-1.5">
-                        <Label htmlFor={`arg-${key}`} className="text-xs font-medium">
-                          {key}
-                          {required.includes(key) && <span className="text-destructive"> *</span>}
-                        </Label>
-                        {renderSchemaInput(key, propSchema, testArgs[key], (v) =>
-                          setTestArgs((prev) => ({ ...prev, [key]: v }))
-                        )}
-                        {propSchema.description && (
-                          <p className="text-xs text-muted-foreground">{propSchema.description}</p>
-                        )}
-                      </div>
-                    ))}
-                  </div>
+                  <ToolRunForm
+                    properties={properties}
+                    required={required}
+                    args={testArgs}
+                    onArgChange={(key, v) => setTestArgs((prev) => ({ ...prev, [key]: v }))}
+                    result={testResult}
+                    error={testError}
+                  />
                 </ScrollArea>
-
-                {testResult && (
-                  <div
-                    className={cn(
-                      "rounded-lg border p-3 text-xs space-y-1.5 max-h-40 overflow-auto",
-                      testResult.ok === false
-                        ? "border-destructive/30 bg-destructive/5"
-                        : "border-green-500/30 bg-green-50 dark:bg-green-950/20",
-                    )}
-                  >
-                    <div className="flex items-center gap-1.5 font-medium">
-                      {testResult.ok === false ? (
-                        <XCircle className="h-3.5 w-3.5 text-destructive" />
-                      ) : (
-                        <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
-                      )}
-                      {testResult.ok === false ? "Failed" : "Result"}
-                    </div>
-                    <pre className="whitespace-pre-wrap break-words font-mono">
-                      {JSON.stringify(testResult, null, 2)}
-                    </pre>
-                  </div>
-                )}
-                {testError && <p className="text-xs text-destructive">{testError}</p>}
 
                 <DialogFooter className="gap-2 sm:gap-2">
                   <Button variant="outline" onClick={() => setTestDialogTool(null)}>

@@ -325,8 +325,10 @@ export interface Report {
   name: string;
   type: ReportType;
   status: ReportStatus;
-  generatedAt: string;
+  format: ReportFormat;
+  generatedAt: string | null;
   fileSize: number;
+  created_at: string;
 }
 
 export interface ReportsListResponse {
