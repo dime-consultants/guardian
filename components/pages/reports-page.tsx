@@ -1,17 +1,20 @@
 "use client";
 
+import { useCallback, useEffect, useRef, useState } from "react";
 import {
   FileSpreadsheet,
   Download,
-  Eye,
   Search,
   Clock,
   FileText,
   Server,
+  Loader2,
+  AlertCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import {
   Select,
@@ -20,79 +23,57 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/contexts/app-context";
+import { toast } from "sonner";
 import Link from "next/link";
+import type { Report, ReportType, ReportFormat } from "@/types/api";
 
-const demoReports = [
+const demoReports: Report[] = [
   {
-    id: "1",
-    name: "Daily Reconciliation Report",
-    description: "Invoice reconciliation summary for May 22, 2024",
-    type: "daily",
-    format: "xlsx",
-    generatedAt: "Today, 09:00 AM",
-    size: "1.2 MB",
-    records: 247,
+    id: "1", name: "Daily Reconciliation Report", type: "reconciliation", status: "ready",
+    format: "xlsx", generatedAt: new Date().toISOString(), fileSize: 1_258_000,
+    created_at: new Date().toISOString(),
   },
   {
-    id: "2",
-    name: "Weekly Invoice Summary",
-    description: "Week 20 invoice processing and variance analysis",
-    type: "weekly",
-    format: "xlsx",
-    generatedAt: "May 19, 2024",
-    size: "3.8 MB",
-    records: 1847,
+    id: "2", name: "Weekly Invoice Summary", type: "billing", status: "ready",
+    format: "xlsx", generatedAt: "2024-05-19T09:00:00Z", fileSize: 3_984_000,
+    created_at: "2024-05-19T09:00:00Z",
   },
   {
-    id: "3",
-    name: "Telephone Billing Analysis - May",
-    description: "CU number breakdown and department allocation",
-    type: "monthly",
-    format: "xlsx",
-    generatedAt: "May 15, 2024",
-    size: "8.5 MB",
-    records: 8450,
-  },
-  {
-    id: "4",
-    name: "KRA Tax Compliance Report",
-    description: "Monthly tax filing preparation for May 2024",
-    type: "monthly",
-    format: "xlsx",
-    generatedAt: "May 20, 2024",
-    size: "2.1 MB",
-    records: 2156,
-  },
-  {
-    id: "5",
-    name: "Variance Analysis Q2",
-    description: "Quarterly variance trends and flagged invoices",
-    type: "quarterly",
-    format: "xlsx",
-    generatedAt: "May 1, 2024",
-    size: "12.4 MB",
-    records: 15230,
-  },
-  {
-    id: "6",
-    name: "Utility Bills Reconciliation",
-    description: "Fuel, water, electricity reconciliation for April",
-    type: "monthly",
-    format: "xlsx",
-    generatedAt: "May 5, 2024",
-    size: "890 KB",
-    records: 342,
+    id: "3", name: "Q2 Variance Analysis", type: "analytics", status: "ready",
+    format: "pdf", generatedAt: "2024-05-01T09:00:00Z", fileSize: 12_400_000,
+    created_at: "2024-05-01T09:00:00Z",
   },
 ];
 
 const typeColors: Record<string, string> = {
-  daily: "bg-chart-1/10 text-chart-1",
-  weekly: "bg-chart-3/10 text-chart-3",
-  monthly: "bg-chart-2/10 text-chart-2",
-  quarterly: "bg-chart-4/10 text-chart-4",
+  reconciliation: "bg-chart-1/10 text-chart-1",
+  billing: "bg-chart-3/10 text-chart-3",
+  analytics: "bg-chart-2/10 text-chart-2",
+  custom: "bg-chart-4/10 text-chart-4",
 };
+
+const statusColors: Record<string, string> = {
+  ready: "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300",
+  generating: "bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300",
+  error: "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300",
+};
+
+function formatBytes(bytes: number): string {
+  if (!bytes) return "0 B";
+  const units = ["B", "KB", "MB", "GB"];
+  const i = Math.floor(Math.log(bytes) / Math.log(1024));
+  return `${(bytes / Math.pow(1024, i)).toFixed(1)} ${units[i]}`;
+}
 
 function AwaitingBackendState() {
   return (
@@ -114,9 +95,141 @@ function AwaitingBackendState() {
 }
 
 export function ReportsPage() {
-  const { demoMode, backendConnected } = useApp();
+  const { demoMode, backendConnected, apiFetch } = useApp();
+  const [reports, setReports] = useState<Report[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+  const [filterType, setFilterType] = useState("all");
+
+  const [showGenerateDialog, setShowGenerateDialog] = useState(false);
+  const [genType, setGenType] = useState<ReportType>("custom");
+  const [genFormat, setGenFormat] = useState<ReportFormat>("xlsx");
+  const [genDateFrom, setGenDateFrom] = useState("");
+  const [genDateTo, setGenDateTo] = useState("");
+  const [isGenerating, setIsGenerating] = useState(false);
+
+  const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
+
   const showEmptyState = !demoMode && !backendConnected;
-  const reports = demoMode ? demoReports : [];
+
+  const loadReports = useCallback(async () => {
+    if (demoMode) {
+      setReports(demoReports);
+      return;
+    }
+    if (!backendConnected || !apiFetch) return;
+
+    setIsLoading(true);
+    try {
+      const res = await apiFetch("reports/");
+      if (res.ok) {
+        const data = await res.json();
+        setReports(data.reports ?? []);
+      }
+    } catch (error) {
+      console.error("Error loading reports:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [demoMode, backendConnected, apiFetch]);
+
+  useEffect(() => {
+    loadReports();
+  }, [loadReports]);
+
+  // Poll while any report is still generating — there is no generic WS
+  // notification listener elsewhere in this app to piggyback on, so this
+  // stays self-contained rather than inventing new shared infrastructure.
+  useEffect(() => {
+    const hasGenerating = reports.some((r) => r.status === "generating");
+    if (hasGenerating && !pollRef.current) {
+      pollRef.current = setInterval(loadReports, 4000);
+    } else if (!hasGenerating && pollRef.current) {
+      clearInterval(pollRef.current);
+      pollRef.current = null;
+    }
+    return () => {
+      if (pollRef.current) {
+        clearInterval(pollRef.current);
+        pollRef.current = null;
+      }
+    };
+  }, [reports, loadReports]);
+
+  const generateReport = async () => {
+    if (!apiFetch) return;
+    setIsGenerating(true);
+    try {
+      const parameters: Record<string, string> = {};
+      if (genDateFrom) parameters.date_from = genDateFrom;
+      if (genDateTo) parameters.date_to = genDateTo;
+
+      const res = await apiFetch("reports/generate/", {
+        method: "POST",
+        body: { type: genType, format: genFormat, parameters },
+      });
+
+      if (res.ok) {
+        setShowGenerateDialog(false);
+        setGenDateFrom("");
+        setGenDateTo("");
+        toast.success("Report generation started");
+        loadReports();
+      } else {
+        const err: Record<string, any> = await res.json().catch(() => ({}));
+        toast.error("Failed to generate report", {
+          description: err.detail || Object.values(err)[0]?.[0] || "Unknown error",
+        });
+      }
+    } catch (error) {
+      console.error("Error generating report:", error);
+      toast.error("Failed to generate report");
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  const downloadReport = async (report: Report) => {
+    if (!apiFetch) return;
+    try {
+      const res = await apiFetch(`reports/${report.id}/download/`);
+      if (res.ok) {
+        const blob = await res.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = `${report.name}.${report.format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      } else {
+        const err = await res.json().catch(() => ({}));
+        toast.error("Download failed", {
+          description: err.error?.message || "The report could not be downloaded.",
+        });
+      }
+    } catch (error) {
+      console.error("Download error:", error);
+      toast.error("Download failed");
+    }
+  };
+
+  const filteredReports = reports.filter((r) => {
+    const matchesSearch = r.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = filterType === "all" || r.type === filterType;
+    return matchesSearch && matchesType;
+  });
+
+  const stats = {
+    total: reports.length,
+    generatedToday: reports.filter((r) => {
+      const d = new Date(r.created_at);
+      const now = new Date();
+      return d.toDateString() === now.toDateString();
+    }).length,
+    storageUsed: reports.reduce((acc, r) => acc + (r.fileSize || 0), 0),
+  };
 
   return (
     <div className="space-y-6 pb-2">
@@ -200,16 +313,16 @@ export function ReportsPage() {
                     <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                     <Input placeholder="Search reports..." className="pl-9 w-full sm:w-48 md:w-64" />
                   </div>
-                  <Select defaultValue="all">
-                    <SelectTrigger className="w-28 sm:w-32">
+                  <Select value={filterType} onValueChange={setFilterType}>
+                    <SelectTrigger className="w-28 sm:w-36">
                       <SelectValue />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="all">All Types</SelectItem>
-                      <SelectItem value="daily">Daily</SelectItem>
-                      <SelectItem value="weekly">Weekly</SelectItem>
-                      <SelectItem value="monthly">Monthly</SelectItem>
-                      <SelectItem value="quarterly">Quarterly</SelectItem>
+                      <SelectItem value="reconciliation">Reconciliation</SelectItem>
+                      <SelectItem value="billing">Billing</SelectItem>
+                      <SelectItem value="analytics">Analytics</SelectItem>
+                      <SelectItem value="custom">Custom</SelectItem>
                     </SelectContent>
                   </Select>
                 </div>
@@ -269,6 +382,62 @@ export function ReportsPage() {
           </Card>
         </>
       )}
+
+      {/* Generate Report Dialog */}
+      <Dialog open={showGenerateDialog} onOpenChange={setShowGenerateDialog}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Generate Report</DialogTitle>
+            <DialogDescription>
+              Runs as a background job — the report will appear in the list as "generating" until it's ready.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-4 py-2">
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Type</Label>
+                <Select value={genType} onValueChange={(v) => setGenType(v as ReportType)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="reconciliation">Reconciliation</SelectItem>
+                    <SelectItem value="billing">Billing</SelectItem>
+                    <SelectItem value="analytics">Analytics</SelectItem>
+                    <SelectItem value="custom">Custom</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="space-y-2">
+                <Label>Format</Label>
+                <Select value={genFormat} onValueChange={(v) => setGenFormat(v as ReportFormat)}>
+                  <SelectTrigger><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="xlsx">Excel (.xlsx)</SelectItem>
+                    <SelectItem value="csv">CSV</SelectItem>
+                    <SelectItem value="pdf">PDF</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>From (optional)</Label>
+                <Input type="date" value={genDateFrom} onChange={(e) => setGenDateFrom(e.target.value)} />
+              </div>
+              <div className="space-y-2">
+                <Label>To (optional)</Label>
+                <Input type="date" value={genDateTo} onChange={(e) => setGenDateTo(e.target.value)} />
+              </div>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowGenerateDialog(false)}>Cancel</Button>
+            <Button onClick={generateReport} disabled={isGenerating}>
+              {isGenerating && <Loader2 className="h-4 w-4 mr-2 animate-spin" />}
+              Generate
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
