@@ -115,9 +115,10 @@ interface AppContextUser {
 }
 
 const roleColors: Record<string, string> = {
-  admin: "bg-[#EEF2F7] text-[#0D3B8E]",
-  finance: "bg-[#EEF2F7] text-[#C8A248]",
-  viewer: "bg-[#EEF2F7] text-[#6B7280]",
+  admin: "bg-muted text-primary",
+  manager: "bg-muted text-secondary",
+  analyst: "bg-muted text-[#C8A248]",
+  viewer: "bg-muted text-muted-foreground",
 };
 
 const roleLabels: Record<string, string> = {
@@ -136,12 +137,12 @@ function PermissionDeniedState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
       <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
-        <Lock className="h-10 w-10 text-[#ef4444] dark:text-red-400" />
+        <Lock className="h-10 w-10 text-destructive dark:text-red-400" />
       </div>
-      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">
+      <h3 className="text-xl font-semibold text-foreground mb-2">
         Access Restricted
       </h3>
-      <p className="text-[#6B7280] text-center max-w-md mb-6">
+      <p className="text-muted-foreground text-center max-w-md mb-6">
         You don't have permission to access user management. This page is only
         available to administrators.
       </p>
@@ -155,13 +156,13 @@ function PermissionDeniedState() {
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-[#EEF2F7] mb-4">
-        <Server className="h-10 w-10 text-[#6B7280]" />
+      <div className="p-4 rounded-full bg-muted mb-4">
+        <Server className="h-10 w-10 text-muted-foreground" />
       </div>
-      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">
+      <h3 className="text-xl font-semibold text-foreground mb-2">
         Awaiting Backend Connection
       </h3>
-      <p className="text-[#6B7280] text-center max-w-md mb-6">
+      <p className="text-muted-foreground text-center max-w-md mb-6">
         Connect to your Django backend to manage users, or enable Demo Mode to
         preview with sample data.
       </p>
@@ -553,7 +554,7 @@ const UsersPage = () => {
   if (backendConnected && !demoMode && hasPermission === null && !isLoading) {
     return (
       <div className="flex items-center justify-center h-[calc(100vh-8rem)]">
-        <Loader2 className="h-8 w-8 animate-spin text-[#6B7280]" />
+        <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
       </div>
     );
   }
@@ -570,16 +571,16 @@ const UsersPage = () => {
       <div className="space-y-6">
         <div className="flex items-center justify-between">
           <div>
-            <h2 className="text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-3">
-              <Users className="h-7 w-7 text-[#0D3B8E]" />
+            <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
+              <Users className="h-7 w-7 text-primary" />
               User Management
             </h2>
-            <p className="text-[#6B7280] mt-1">
+            <p className="text-muted-foreground mt-1">
               Manage user accounts, roles, and permissions.
             </p>
           </div>
         </div>
-        <Card className="border-[#E5E7EB] bg-white">
+        <Card className="border-border bg-card">
           <AwaitingBackendState />
         </Card>
       </div>
@@ -591,11 +592,11 @@ const UsersPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
-            <Users className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
+            <Users className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
             User Management
           </h2>
-          <p className="text-[#6B7280] mt-1 text-sm line-clamp-2">
+          <p className="text-muted-foreground mt-1 text-sm line-clamp-2">
             Manage user accounts, roles, permissions, and access control.
           </p>
         </div>
@@ -625,7 +626,7 @@ const UsersPage = () => {
             <RefreshCw className={cn("h-4 w-4", isLoading && "animate-spin")} />
           </Button>
           <Button
-            className="bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
+            className="bg-primary text-primary-foreground hover:bg-primary/90"
             onClick={() => setShowAddDialog(true)}
           >
             <UserPlus className="h-4 w-4 mr-2" />
@@ -636,45 +637,45 @@ const UsersPage = () => {
 
       {/* Stats */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:grid-cols-4">
-        <Card className="border-[#E5E7EB] bg-white p-4 gap-0">
+        <Card className="border-border bg-card p-4 gap-0">
           <CardContent className="p-0">
-            <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.total}</div>
-            <p className="text-sm text-[#6B7280] mt-0.5">Total Users</p>
+            <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.total}</div>
+            <p className="text-sm text-muted-foreground mt-0.5">Total Users</p>
           </CardContent>
         </Card>
-        <Card className="border-[#E5E7EB] bg-white p-4 gap-0">
+        <Card className="border-border bg-card p-4 gap-0">
           <CardContent className="p-0">
-            <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.active}</div>
-            <p className="text-sm text-[#6B7280] mt-0.5">Active Users</p>
+            <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.active}</div>
+            <p className="text-sm text-muted-foreground mt-0.5">Active Users</p>
           </CardContent>
         </Card>
-        <Card className="border-[#E5E7EB] bg-white p-4 gap-0">
+        <Card className="border-border bg-card p-4 gap-0">
           <CardContent className="p-0">
-            <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.admins}</div>
-            <p className="text-sm text-[#6B7280] mt-0.5">Administrators</p>
+            <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.admins}</div>
+            <p className="text-sm text-muted-foreground mt-0.5">Administrators</p>
           </CardContent>
         </Card>
-        <Card className="border-[#E5E7EB] bg-white p-4 gap-0">
+        <Card className="border-border bg-card p-4 gap-0">
           <CardContent className="p-0">
-            <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.departments}</div>
-            <p className="text-sm text-[#6B7280] mt-0.5">Departments</p>
+            <div className="text-2xl md:text-3xl font-bold text-foreground">{stats.departments}</div>
+            <p className="text-sm text-muted-foreground mt-0.5">Departments</p>
           </CardContent>
         </Card>
       </div>
 
       {/* User List Card - Simplified for brevity, same as before */}
-      <Card className="border-[#E5E7EB] bg-white">
+      <Card className="border-border bg-card">
         <CardHeader>
           <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-4">
             <div className="flex-1 min-w-0">
-              <CardTitle className="text-[#2B2B2B]">
+              <CardTitle className="text-foreground">
                 Team Members
               </CardTitle>
               <CardDescription>Manage access and permissions</CardDescription>
             </div>
             <div className="flex items-center gap-2 sm:flex-shrink-0">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
+                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   placeholder="Search users..."
                   className="pl-9 w-full sm:w-64"
@@ -693,7 +694,7 @@ const UsersPage = () => {
           </div>
 
           {showFilters && (
-            <div className="flex gap-4 mt-4 pt-4 border-t border-[#E5E7EB] flex-wrap">
+            <div className="flex gap-4 mt-4 pt-4 border-t border-border flex-wrap">
               <div className="flex-1 min-w-[150px]">
                 <Label className="text-xs">Role</Label>
                 <Select value={filterRole} onValueChange={setFilterRole}>
@@ -739,12 +740,12 @@ const UsersPage = () => {
         <CardContent>
           {isLoading ? (
             <div className="flex items-center justify-center py-12">
-              <Loader2 className="h-8 w-8 animate-spin text-[#6B7280]" />
+              <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
             </div>
           ) : filteredUsers.length === 0 ? (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 mx-auto mb-4 text-[#6B7280] opacity-50" />
-              <p className="text-[#6B7280]">No users found</p>
+              <Users className="h-12 w-12 mx-auto mb-4 text-muted-foreground opacity-50" />
+              <p className="text-muted-foreground">No users found</p>
               <Button
                 variant="link"
                 onClick={() => setShowAddDialog(true)}
@@ -758,11 +759,11 @@ const UsersPage = () => {
               {filteredUsers.map((user) => (
                 <div
                   key={user.id}
-                  className="flex items-center gap-4 p-4 rounded-lg bg-[#EEF2F7]/50 hover:bg-[#EEF2F7] transition-colors group"
+                  className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-[#0D3B8E]/10 text-[#0D3B8E]">
-                      {(user.full_name || user.username || "?")
+                    <AvatarFallback className="bg-primary/10 text-primary">
+                      {user.full_name
                         .split(" ")
                         .map((n) => n[0])
                         .join("")
@@ -772,7 +773,7 @@ const UsersPage = () => {
                   </Avatar>
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-1 flex-wrap">
-                      <span className="font-medium text-[#2B2B2B]">
+                      <span className="font-medium text-foreground">
                         {user.full_name}
                       </span>
                       <span
@@ -786,10 +787,10 @@ const UsersPage = () => {
                       {user.is_active ? (
                         <CheckCircle2 className="h-4 w-4 text-green-500" />
                       ) : (
-                        <XCircle className="h-4 w-4 text-[#ef4444]" />
+                        <XCircle className="h-4 w-4 text-destructive" />
                       )}
                     </div>
-                    <div className="flex items-center gap-4 text-xs text-[#6B7280] flex-wrap">
+                    <div className="flex items-center gap-4 text-xs text-muted-foreground flex-wrap">
                       <span className="flex items-center gap-1">
                         <Mail className="h-3 w-3" />
                         {user.email}
@@ -801,7 +802,7 @@ const UsersPage = () => {
                         </span>
                       )}
                       {user.organization_name && (
-                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-[#EEF2F7] text-[#0D3B8E]">
+                        <span className="flex items-center gap-1 px-1.5 py-0.5 rounded bg-muted text-primary">
                           {user.organization_name}
                         </span>
                       )}
@@ -812,8 +813,8 @@ const UsersPage = () => {
                     </div>
                   </div>
                   <div className="text-right">
-                    <p className="text-sm text-[#6B7280]">Last active</p>
-                    <p className="text-sm text-[#2B2B2B]">
+                    <p className="text-sm text-muted-foreground">Last active</p>
+                    <p className="text-sm text-foreground">
                       {user.last_login
                         ? new Date(user.last_login).toLocaleDateString()
                         : "Never"}
@@ -859,7 +860,7 @@ const UsersPage = () => {
                         <DropdownMenuSeparator />
                         <DropdownMenuItem
                           onClick={() => openDeleteDialog(user)}
-                          className="text-[#ba1a1a] focus:text-[#ba1a1a]"
+                          className="text-destructive focus:text-destructive"
                         >
                           <Trash2 className="h-4 w-4 mr-2" />
                           Delete User
@@ -954,7 +955,7 @@ const UsersPage = () => {
                   )}
                 </Button>
               </div>
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-muted-foreground">
                 Password must be at least 8 characters long.
               </p>
             </div>
@@ -974,7 +975,7 @@ const UsersPage = () => {
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>
-                <p className="text-xs text-[#6B7280] mt-1">
+                <p className="text-xs text-muted-foreground mt-1">
                   {roleDescriptions[formData.role]}
                 </p>
               </div>
@@ -1108,7 +1109,7 @@ const UsersPage = () => {
                 onChange={(e) =>
                   setFormData({ ...formData, is_active: e.target.checked })
                 }
-                className="rounded border-[#E5E7EB]"
+                className="rounded border-border"
               />
               <Label htmlFor="is_active">Account Active</Label>
             </div>
@@ -1142,7 +1143,7 @@ const UsersPage = () => {
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction
               onClick={deleteUser}
-              className="bg-[#ba1a1a] text-white hover:bg-[#ba1a1a]/90"
+              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
             >
               {isSubmitting && (
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
@@ -1204,10 +1205,10 @@ const UsersPage = () => {
             {newPassword &&
               confirmPassword &&
               newPassword !== confirmPassword && (
-                <p className="text-sm text-[#ef4444]">Passwords do not match</p>
+                <p className="text-sm text-destructive">Passwords do not match</p>
               )}
             {newPassword && newPassword.length < 8 && (
-              <p className="text-sm text-[#ef4444]">
+              <p className="text-sm text-destructive">
                 Password must be at least 8 characters
               </p>
             )}
