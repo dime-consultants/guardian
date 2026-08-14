@@ -22,6 +22,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/com
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Label } from "@/components/ui/label";
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -30,6 +32,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/contexts/app-context";
+import { BatchToolRunDialog } from "@/components/batch-tool-run-dialog";
+import { Wrench } from "lucide-react";
 import Link from "next/link";
 
 interface FileItem {
@@ -179,6 +183,8 @@ export function UploadsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filterType, setFilterType] = useState<string | null>(null);
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<number>>(new Set());
+  const [showBatchToolDialog, setShowBatchToolDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const showEmptyState = !demoMode && !backendConnected;
 
@@ -308,6 +314,27 @@ export function UploadsPage() {
         file.name.toLowerCase().includes(searchQuery.toLowerCase())
       )
     : files;
+
+  const toggleFileSelection = (fileId: number) => {
+    setSelectedFileIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) next.delete(fileId);
+      else next.add(fileId);
+      return next;
+    });
+  };
+
+  const allVisibleSelected = filteredFiles.length > 0 && filteredFiles.every((f) => selectedFileIds.has(f.id));
+  const toggleSelectAll = () => {
+    setSelectedFileIds((prev) => {
+      if (allVisibleSelected) return new Set();
+      return new Set(filteredFiles.map((f) => f.id));
+    });
+  };
+
+  const selectedFileRefs = filteredFiles
+    .filter((f) => selectedFileIds.has(f.id))
+    .map((f) => ({ id: f.id, name: f.name }));
 
   return (
     <div className="space-y-6">
@@ -456,8 +483,45 @@ export function UploadsPage() {
                   )}
                 </div>
               </div>
+              {!demoMode && selectedFileIds.size > 0 && (
+                <div className="flex items-center justify-between gap-2 mt-3 p-2.5 rounded-lg bg-[#0D3B8E]/5 border border-[#0D3B8E]/20">
+                  <span className="text-xs text-[#0D3B8E] font-medium">
+                    {selectedFileIds.size} file{selectedFileIds.size === 1 ? "" : "s"} selected
+                  </span>
+                  <div className="flex items-center gap-2">
+                    <Button
+                      size="sm"
+                      className="h-7 text-xs px-3 bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
+                      onClick={() => setShowBatchToolDialog(true)}
+                    >
+                      <Wrench className="h-3 w-3 mr-1.5" />
+                      Run Tools
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs px-2"
+                      onClick={() => setSelectedFileIds(new Set())}
+                    >
+                      Clear
+                    </Button>
+                  </div>
+                </div>
+              )}
             </CardHeader>
             <CardContent>
+              {!demoMode && filteredFiles.length > 0 && (
+                <div className="flex items-center gap-2 px-1 pb-2">
+                  <Checkbox
+                    id="select-all-files"
+                    checked={allVisibleSelected}
+                    onCheckedChange={toggleSelectAll}
+                  />
+                  <Label htmlFor="select-all-files" className="text-xs text-[#6B7280] cursor-pointer">
+                    Select all
+                  </Label>
+                </div>
+              )}
               {isLoading && !demoMode ? (
                 <div className="flex items-center justify-center py-8">
                   <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
@@ -475,6 +539,13 @@ export function UploadsPage() {
                         key={file.id}
                         className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                       >
+                        {!demoMode && (
+                          <Checkbox
+                            checked={selectedFileIds.has(file.id)}
+                            onCheckedChange={() => toggleFileSelection(file.id)}
+                            className="flex-shrink-0"
+                          />
+                        )}
                         <div className={cn(
                           "p-2.5 rounded-lg flex-shrink-0",
                           getFileTypeColor(file.extension).bg
@@ -536,11 +607,14 @@ export function UploadsPage() {
                                   </Button>
                                 </DropdownMenuTrigger>
                                 <DropdownMenuContent align="end">
-                                  <DropdownMenuItem disabled>
-                                    Process with AI
-                                  </DropdownMenuItem>
-                                  <DropdownMenuItem disabled>
-                                    Convert Format
+                                  <DropdownMenuItem
+                                    onClick={() => {
+                                      setSelectedFileIds(new Set([file.id]));
+                                      setShowBatchToolDialog(true);
+                                    }}
+                                  >
+                                    <Wrench className="h-4 w-4 mr-2" />
+                                    Run Tools
                                   </DropdownMenuItem>
                                   <DropdownMenuItem
                                     className="text-destructive"
@@ -586,6 +660,12 @@ export function UploadsPage() {
           )}
         </>
       )}
+
+      <BatchToolRunDialog
+        open={showBatchToolDialog}
+        onOpenChange={setShowBatchToolDialog}
+        files={selectedFileRefs}
+      />
     </div>
   );
 }

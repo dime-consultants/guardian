@@ -80,7 +80,7 @@ interface User {
   first_name: string;
   last_name: string;
   full_name: string;
-  role: "admin" | "manager" | "analyst" | "viewer";
+  role: "admin" | "finance" | "viewer";
   department: string;
   is_active: boolean;
   last_login?: string;
@@ -102,11 +102,7 @@ interface UserFormData {
   is_active: boolean;
 }
 
-interface Department {
-  id: number;
-  name: string;
-  description: string;
-}
+type Department = string;
 
 // Extended type for the current user from app context
 interface AppContextUser {
@@ -119,23 +115,20 @@ interface AppContextUser {
 }
 
 const roleColors: Record<string, string> = {
-  admin: "bg-muted text-primary",
-  manager: "bg-muted text-secondary",
-  analyst: "bg-muted text-[#C8A248]",
-  viewer: "bg-muted text-muted-foreground",
+  admin: "bg-[#EEF2F7] text-[#0D3B8E]",
+  finance: "bg-[#EEF2F7] text-[#C8A248]",
+  viewer: "bg-[#EEF2F7] text-[#6B7280]",
 };
 
 const roleLabels: Record<string, string> = {
   admin: "Administrator",
-  manager: "Manager",
-  analyst: "Financial Analyst",
+  finance: "Finance",
   viewer: "Viewer",
 };
 
 const roleDescriptions: Record<string, string> = {
   admin: "Full system access, can manage users and settings",
-  manager: "Can manage invoices, reports, and team workflows",
-  analyst: "Can process data, generate reports, and analyze invoices",
+  finance: "Can upload files, run jobs, and process data",
   viewer: "Read-only access to dashboards and reports",
 };
 
@@ -201,7 +194,7 @@ const UsersPage = () => {
     email: "",
     first_name: "",
     last_name: "",
-    role: "analyst",
+    role: "viewer",
     department: "",
     is_active: true,
   });
@@ -264,16 +257,10 @@ const UsersPage = () => {
     try {
       const res = await apiFetch("users/departments/");
       if (res.ok) {
-        const data = await res.json();
+        const data: string[] = await res.json();
         setDepartments(data);
       } else {
-        setDepartments([
-          { id: 1, name: "Finance", description: "Financial operations" },
-          { id: 2, name: "Accounts", description: "Accounting department" },
-          { id: 3, name: "Tax", description: "Tax compliance" },
-          { id: 4, name: "Operations", description: "Business operations" },
-          { id: 5, name: "IT", description: "Information technology" },
-        ]);
+        setDepartments(["Finance", "Accounts", "Tax", "Operations", "IT"]);
       }
     } catch (error) {
       console.error("Error loading departments:", error);
@@ -288,7 +275,7 @@ const UsersPage = () => {
     try {
       const res = await apiFetch("users/", {
         method: "POST",
-        body: JSON.stringify(formData),
+        body: formData,
       });
 
       if (res.ok) {
@@ -332,14 +319,14 @@ const UsersPage = () => {
     try {
       const res = await apiFetch(`users/${selectedUser.id}/`, {
         method: "PATCH",
-        body: JSON.stringify({
+        body: {
           first_name: formData.first_name,
           last_name: formData.last_name,
           email: formData.email,
           role: formData.role,
           department: formData.department || null,
           is_active: formData.is_active,
-        }),
+        },
       });
 
       if (res.ok) {
@@ -429,7 +416,7 @@ const UsersPage = () => {
     try {
       const res = await apiFetch(`users/${selectedUser.id}/reset-password/`, {
         method: "POST",
-        body: JSON.stringify({ password: newPassword }),
+        body: { password: newPassword },
       });
 
       if (res.ok) {
@@ -465,7 +452,7 @@ const UsersPage = () => {
     try {
       const res = await apiFetch(`users/${user.id}/`, {
         method: "PATCH",
-        body: JSON.stringify({ is_active: !user.is_active }),
+        body: { is_active: !user.is_active },
       });
 
       if (res.ok) {
@@ -495,7 +482,7 @@ const UsersPage = () => {
       email: "",
       first_name: "",
       last_name: "",
-      role: "analyst",
+      role: "viewer",
       department: "",
       is_active: true,
     });
@@ -716,8 +703,7 @@ const UsersPage = () => {
                   <SelectContent>
                     <SelectItem value="all">All Roles</SelectItem>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="analyst">Analyst</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>
@@ -775,7 +761,7 @@ const UsersPage = () => {
                   className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary/10 text-primary">
+                    <AvatarFallback className="bg-[#0D3B8E]/10 text-[#0D3B8E]">
                       {user.full_name
                         .split(" ")
                         .map((n) => n[0])
@@ -984,8 +970,7 @@ const UsersPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="analyst">Financial Analyst</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1010,8 +995,8 @@ const UsersPage = () => {
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
-                        {dept.name}
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
                       </SelectItem>
                     ))}
                   </SelectContent>
@@ -1085,8 +1070,7 @@ const UsersPage = () => {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="admin">Administrator</SelectItem>
-                    <SelectItem value="manager">Manager</SelectItem>
-                    <SelectItem value="analyst">Financial Analyst</SelectItem>
+                    <SelectItem value="finance">Finance</SelectItem>
                     <SelectItem value="viewer">Viewer</SelectItem>
                   </SelectContent>
                 </Select>
@@ -1108,8 +1092,8 @@ const UsersPage = () => {
                   <SelectContent>
                     <SelectItem value="none">None</SelectItem>
                     {departments.map((dept) => (
-                      <SelectItem key={dept.id} value={dept.name}>
-                        {dept.name}
+                      <SelectItem key={dept} value={dept}>
+                        {dept}
                       </SelectItem>
                     ))}
                   </SelectContent>
