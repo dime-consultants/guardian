@@ -110,11 +110,11 @@ export function SettingsPage() {
     <div className="space-y-6 pb-2">
       {/* Header */}
       <div>
-        <h2 className="text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-3">
-          <Settings className="h-7 w-7 text-[#0D3B8E]" />
+        <h2 className="text-2xl font-bold tracking-tight text-foreground flex items-center gap-3">
+          <Settings className="h-7 w-7 text-primary" />
           Settings
         </h2>
-        <p className="text-[#6B7280] mt-1">
+        <p className="text-muted-foreground mt-1">
           Manage application settings, integrations, and preferences.
         </p>
       </div>
@@ -123,28 +123,28 @@ export function SettingsPage() {
         {/* Main Settings */}
         <div className="lg:col-span-2 space-y-6">
           {/* Demo Mode & Backend Settings */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Server className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Data Source</CardTitle>
+                <Server className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Data Source</CardTitle>
               </div>
               <CardDescription>Configure demo mode and backend connection</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
               {/* Demo Mode Toggle */}
-              <div className="flex items-center justify-between p-4 rounded-lg bg-[#EEF2F7]/50 border border-[#E5E7EB]">
+              <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-lg ${demoMode ? "bg-amber-100 dark:bg-amber-900/50" : "bg-[#EEF2F7]"}`}>
+                  <div className={`p-2 rounded-lg ${demoMode ? "bg-amber-100 dark:bg-amber-900/50" : "bg-muted"}`}>
                     {demoMode ? (
-                      <ToggleRight className="h-5 w-5 text-[#F59E0B] dark:text-amber-400" />
+                      <ToggleRight className="h-5 w-5 text-warning" />
                     ) : (
-                      <ToggleLeft className="h-5 w-5 text-[#6B7280]" />
+                      <ToggleLeft className="h-5 w-5 text-muted-foreground" />
                     )}
                   </div>
                   <div>
-                    <p className="font-medium text-[#2B2B2B]">Demo Mode</p>
-                    <p className="text-sm text-[#6B7280]">
+                    <p className="font-medium text-foreground">Demo Mode</p>
+                    <p className="text-sm text-muted-foreground">
                       {demoMode
                         ? "Using demo data and Grok AI for chat"
                         : "Connect to Django backend for live data"}
@@ -162,7 +162,7 @@ export function SettingsPage() {
                     variant="secondary"
                     className={
                       demoMode
-                        ? "bg-[#EEF2F7] text-[#6B7280]"
+                        ? "bg-muted text-muted-foreground"
                         : backendConnected
                         ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
                         : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
@@ -216,8 +216,8 @@ export function SettingsPage() {
                   <p
                     className={`text-sm ${
                       connectionTestResult === "success"
-                        ? "text-[#10B981] dark:text-green-400"
-                        : "text-[#ef4444] dark:text-red-400"
+                        ? "text-success"
+                        : "text-destructive"
                     }`}
                   >
                     {connectionTestResult === "success"
@@ -225,7 +225,7 @@ export function SettingsPage() {
                       : "Connection failed. Check the URL and ensure the backend is running."}
                   </p>
                 )}
-                <p className="text-xs text-[#6B7280]">
+                <p className="text-xs text-muted-foreground">
                   The backend should expose /api/health for connection testing. When Demo Mode is off, data will be fetched from this URL.
                 </p>
               </div>
@@ -233,11 +233,11 @@ export function SettingsPage() {
           </Card>
 
           {/* Profile Settings */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <User className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Profile Settings</CardTitle>
+                <User className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Profile Settings</CardTitle>
               </div>
               <CardDescription>Manage your account information</CardDescription>
             </CardHeader>
@@ -267,7 +267,7 @@ export function SettingsPage() {
                 </div>
               </div>
               {profileSaveError && (
-                <p className="text-sm text-[#ef4444] dark:text-red-400">{profileSaveError}</p>
+                <p className="text-sm text-destructive">{profileSaveError}</p>
               )}
               <Button
                 onClick={saveProfile}
@@ -284,19 +284,19 @@ export function SettingsPage() {
           </Card>
 
           {/* Notifications */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Bell className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Notifications</CardTitle>
+                <Bell className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Notifications</CardTitle>
               </div>
               <CardDescription>Configure alert and notification preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-[#2B2B2B]">Email Notifications</p>
-                  <p className="text-sm text-[#6B7280]">
+                  <p className="font-medium text-foreground">Email Notifications</p>
+                  <p className="text-sm text-muted-foreground">
                     Receive email alerts for important events
                   </p>
                 </div>
@@ -304,8 +304,8 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-[#2B2B2B]">Variance Alerts</p>
-                  <p className="text-sm text-[#6B7280]">
+                  <p className="font-medium text-foreground">Variance Alerts</p>
+                  <p className="text-sm text-muted-foreground">
                     Get notified when variances exceed threshold
                   </p>
                 </div>
@@ -313,8 +313,8 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-[#2B2B2B]">Processing Complete</p>
-                  <p className="text-sm text-[#6B7280]">
+                  <p className="font-medium text-foreground">Processing Complete</p>
+                  <p className="text-sm text-muted-foreground">
                     Notify when batch processing completes
                   </p>
                 </div>
@@ -322,8 +322,8 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="font-medium text-[#2B2B2B]">Weekly Summary</p>
-                  <p className="text-sm text-[#6B7280]">
+                  <p className="font-medium text-foreground">Weekly Summary</p>
+                  <p className="text-sm text-muted-foreground">
                     Receive weekly performance digest
                   </p>
                 </div>
@@ -333,35 +333,35 @@ export function SettingsPage() {
           </Card>
 
           {/* Integrations */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Link className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Integrations</CardTitle>
+                <Link className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Integrations</CardTitle>
               </div>
               <CardDescription>Connect external systems and data sources</CardDescription>
             </CardHeader>
             <CardContent className="space-y-4">
               {[
-                { icon: Database, color: "bg-chart-3/10", iconColor: "text-chart-3", name: "ACON System", desc: "Invoice data source", status: "Connected", statusClass: "bg-chart-3/10 text-chart-3", action: "Configure", actionVariant: "outline" as const },
+                { icon: Database, color: "bg-chart-3/10", iconColor: "text-chart-3", name: "BRNET System", desc: "Invoice data source", status: "Connected", statusClass: "bg-chart-3/10 text-chart-3", action: "Configure", actionVariant: "outline" as const },
                 { icon: Globe, color: "bg-chart-1/10", iconColor: "text-chart-1", name: "KRA Portal", desc: "Tax compliance data", status: "Connected", statusClass: "bg-chart-3/10 text-chart-3", action: "Configure", actionVariant: "outline" as const },
-                { icon: Database, color: "bg-chart-2/10", iconColor: "text-chart-2", name: "Safaricom Billing", desc: "Telephone billing data", status: "Not connected", statusClass: "bg-[#EEF2F7] text-[#6B7280]", action: "Connect", actionVariant: "default" as const },
+                { icon: Database, color: "bg-chart-2/10", iconColor: "text-chart-2", name: "Safaricom Paybill", desc: "Paybill Transactions", status: "Not connected", statusClass: "bg-muted text-muted-foreground", action: "Connect", actionVariant: "default" as const },
               ].map((item) => (
-                <div key={item.name} className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-[#EEF2F7]/50">
+                <div key={item.name} className="flex flex-wrap items-center gap-3 p-3 rounded-lg bg-muted/50">
                   <div className="flex items-center gap-3 flex-1 min-w-0">
                     <div className={`p-2 rounded-lg ${item.color} flex-shrink-0`}>
                       <item.icon className={`h-4 w-4 ${item.iconColor}`} />
                     </div>
                     <div className="min-w-0">
-                      <p className="font-medium text-[#2B2B2B]">{item.name}</p>
-                      <p className="text-sm text-[#6B7280]">{item.desc}</p>
+                      <p className="font-medium text-foreground">{item.name}</p>
+                      <p className="text-sm text-muted-foreground">{item.desc}</p>
                     </div>
                   </div>
                   <div className="flex items-center gap-2 flex-shrink-0">
                     <span className={`text-xs px-2 py-1 rounded-full ${item.statusClass}`}>
                       {item.status}
                     </span>
-                    <Button variant={item.actionVariant} size="sm" className={item.actionVariant === "default" ? "bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90" : ""}>
+                    <Button variant={item.actionVariant} size="sm" className={item.actionVariant === "default" ? "bg-primary text-primary-foreground hover:bg-primary/90" : ""}>
                       {item.action}
                     </Button>
                   </div>
@@ -374,11 +374,11 @@ export function SettingsPage() {
         {/* Sidebar Settings */}
         <div className="space-y-6">
           {/* Security */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Shield className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Security</CardTitle>
+                <Shield className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Security</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
@@ -392,8 +392,8 @@ export function SettingsPage() {
               </Button>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-[#2B2B2B]">Session Timeout</p>
-                  <p className="text-xs text-[#6B7280]">Auto-logout after inactivity</p>
+                  <p className="text-sm font-medium text-foreground">Session Timeout</p>
+                  <p className="text-xs text-muted-foreground">Auto-logout after inactivity</p>
                 </div>
                 <Select defaultValue="30">
                   <SelectTrigger className="w-24">
@@ -410,18 +410,18 @@ export function SettingsPage() {
           </Card>
 
           {/* Appearance */}
-          <Card className="border-[#E5E7EB] bg-white">
+          <Card className="border-border bg-card">
             <CardHeader>
               <div className="flex items-center gap-2">
-                <Moon className="h-5 w-5 text-[#0D3B8E]" />
-                <CardTitle className="text-[#2B2B2B]">Appearance</CardTitle>
+                <Moon className="h-5 w-5 text-primary" />
+                <CardTitle className="text-foreground">Appearance</CardTitle>
               </div>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-[#2B2B2B]">Theme</p>
-                  <p className="text-xs text-[#6B7280]">Choose color scheme</p>
+                  <p className="text-sm font-medium text-foreground">Theme</p>
+                  <p className="text-xs text-muted-foreground">Choose color scheme</p>
                 </div>
                 <Select value={theme} onValueChange={setTheme}>
                   <SelectTrigger className="w-28">
@@ -446,8 +446,8 @@ export function SettingsPage() {
               </div>
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-[#2B2B2B]">Compact Mode</p>
-                  <p className="text-xs text-[#6B7280]">Reduce spacing</p>
+                  <p className="text-sm font-medium text-foreground">Compact Mode</p>
+                  <p className="text-xs text-muted-foreground">Reduce spacing</p>
                 </div>
                 <Switch />
               </div>
@@ -455,7 +455,7 @@ export function SettingsPage() {
           </Card>
 
           {/* Save Button */}
-          <Button className="w-full bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90">
+          <Button className="w-full bg-primary text-primary-foreground hover:bg-primary/90">
             <Save className="h-4 w-4 mr-2" />
             Save Changes
           </Button>

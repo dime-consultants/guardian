@@ -27,7 +27,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#F8F9FB]">
+    <div className="fixed inset-0 overflow-hidden bg-background">
       {mobileSidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
