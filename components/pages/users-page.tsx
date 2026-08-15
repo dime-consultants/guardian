@@ -762,7 +762,7 @@ const UsersPage = () => {
                 >
                   <Avatar className="h-10 w-10">
                     <AvatarFallback className="bg-[#0D3B8E]/10 text-[#0D3B8E]">
-                      {user.full_name
+                      {(user.full_name || user.username || "?")
                         .split(" ")
                         .map((n) => n[0])
                         .join("")
