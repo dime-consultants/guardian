@@ -273,23 +273,33 @@ export function ReportsPage() {
       ) : (
         <>
           {/* Quick Stats */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-            <Card className="border-[#E5E7EB] bg-white p-4 gap-0">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 md:grid-cols-4">
+            <Card className="border-border bg-card p-4 gap-0">
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.total}</div>
-                <p className="text-sm text-[#6B7280] mt-0.5">Total Reports</p>
+                <div className="text-2xl md:text-3xl font-bold text-foreground">{reports.length}</div>
+                <p className="text-sm text-muted-foreground mt-0.5">Total Reports</p>
               </CardContent>
             </Card>
             <Card className="border-border bg-card p-4 gap-0">
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{stats.generatedToday}</div>
-                <p className="text-sm text-[#6B7280] mt-0.5">Generated Today</p>
+                <div className="text-2xl md:text-3xl font-bold text-foreground">
+                  {reports.filter((r) => r.generatedAt.includes("Today")).length}
+                </div>
+                <p className="text-sm text-muted-foreground mt-0.5">Generated Today</p>
               </CardContent>
             </Card>
             <Card className="border-border bg-card p-4 gap-0">
               <CardContent className="p-0">
-                <div className="text-2xl md:text-3xl font-bold text-[#2B2B2B]">{formatBytes(stats.storageUsed)}</div>
-                <p className="text-sm text-[#6B7280] mt-0.5">Storage Used</p>
+                <div className="text-2xl md:text-3xl font-bold text-foreground">
+                  {reports.reduce((acc, r) => acc + r.records, 0).toLocaleString()}
+                </div>
+                <p className="text-sm text-muted-foreground mt-0.5">Total Records</p>
+              </CardContent>
+            </Card>
+            <Card className="border-border bg-card p-4 gap-0">
+              <CardContent className="p-0">
+                <div className="text-2xl md:text-3xl font-bold text-foreground">28.9 MB</div>
+                <p className="text-sm text-muted-foreground mt-0.5">Storage Used</p>
               </CardContent>
             </Card>
           </div>
@@ -299,18 +309,13 @@ export function ReportsPage() {
             <CardHeader>
               <div className="flex flex-wrap items-start gap-3">
                 <div className="flex-1 min-w-0">
-                  <CardTitle className="text-[#2B2B2B]">Generated Reports</CardTitle>
-                  <CardDescription>Download reconciliation, billing, and analytics reports</CardDescription>
+                  <CardTitle className="text-foreground">Generated Reports</CardTitle>
+                  <CardDescription>Download and view reconciliation reports</CardDescription>
                 </div>
                 <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
                   <div className="relative flex-1 sm:flex-none">
-                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
-                    <Input
-                      placeholder="Search reports..."
-                      className="pl-9 w-full sm:w-48 md:w-64"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input placeholder="Search reports..." className="pl-9 w-full sm:w-48 md:w-64" />
                   </div>
                   <Select value={filterType} onValueChange={setFilterType}>
                     <SelectTrigger className="w-28 sm:w-36">
@@ -328,75 +333,55 @@ export function ReportsPage() {
               </div>
             </CardHeader>
             <CardContent>
-              {isLoading && reports.length === 0 ? (
-                <div className="flex items-center justify-center py-10 text-[#6B7280]">
-                  <Loader2 className="h-5 w-5 animate-spin mr-2" />
-                  Loading reports...
-                </div>
-              ) : filteredReports.length === 0 ? (
-                <div className="text-center py-10 text-sm text-[#6B7280]">
-                  No reports yet. Click "Generate Report" to create one.
-                </div>
-              ) : (
-                <div className="space-y-3">
-                  {filteredReports.map((report) => (
-                    <div
-                      key={report.id}
-                      className="flex items-center gap-4 p-4 rounded-lg bg-[#EEF2F7]/50 hover:bg-[#EEF2F7] transition-colors group"
-                    >
-                      <div className="p-2.5 rounded-lg bg-chart-3/10 flex-shrink-0">
-                        {report.status === "error" ? (
-                          <AlertCircle className="h-5 w-5 text-destructive" />
-                        ) : (
-                          <FileSpreadsheet className="h-5 w-5 text-chart-3" />
-                        )}
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="mb-1 flex items-center gap-2 flex-wrap">
-                          <span className="font-medium text-[#2B2B2B] text-sm leading-snug">
-                            {report.name}
-                          </span>
-                          <span
-                            className={cn(
-                              "inline-block text-xs px-2 py-0.5 rounded-full capitalize",
-                              typeColors[report.type],
-                            )}
-                          >
-                            {report.type}
-                          </span>
-                          <span
-                            className={cn(
-                              "inline-block text-xs px-2 py-0.5 rounded-full capitalize",
-                              statusColors[report.status],
-                            )}
-                          >
-                            {report.status}
-                          </span>
-                        </div>
-                        <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3 w-3 flex-shrink-0" />
-                            {report.generatedAt ? new Date(report.generatedAt).toLocaleString() : "Not yet generated"}
-                          </span>
-                          <span className="uppercase">{report.format}</span>
-                          {report.fileSize > 0 && <span>{formatBytes(report.fileSize)}</span>}
-                        </div>
-                      </div>
-                      <div className="flex items-center gap-1 md:gap-2">
-                        <Button
-                          size="sm"
-                          className="bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90 px-2 md:px-3"
-                          disabled={report.status !== "ready"}
-                          onClick={() => downloadReport(report)}
+              <div className="space-y-3">
+                {reports.map((report) => (
+                  <div
+                    key={report.id}
+                    className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
+                  >
+                    <div className="p-2.5 rounded-lg bg-chart-3/10 flex-shrink-0">
+                      <FileSpreadsheet className="h-5 w-5 text-chart-3" />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <div className="mb-1">
+                        <span className="font-medium text-foreground text-sm leading-snug">
+                          {report.name}
+                        </span>
+                        {" "}
+                        <span
+                          className={cn(
+                            "inline-block text-xs px-2 py-0.5 rounded-full capitalize",
+                            typeColors[report.type]
+                          )}
                         >
-                          <Download className="h-4 w-4 md:mr-2" />
-                          <span className="hidden md:inline">Download</span>
-                        </Button>
+                          {report.type}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground mb-1 line-clamp-1">
+                        {report.description}
+                      </p>
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
+                        <span className="flex items-center gap-1">
+                          <Clock className="h-3 w-3 flex-shrink-0" />
+                          {report.generatedAt}
+                        </span>
+                        <span>{report.size}</span>
+                        <span>{report.records.toLocaleString()} rec</span>
                       </div>
                     </div>
-                  ))}
-                </div>
-              )}
+                    <div className="flex items-center gap-1 md:gap-2 md:opacity-0 md:group-hover:opacity-100 transition-opacity">
+                      <Button variant="outline" size="sm" className="px-2 md:px-3">
+                        <Eye className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Preview</span>
+                      </Button>
+                      <Button size="sm" className="bg-primary text-primary-foreground hover:bg-primary/90 px-2 md:px-3">
+                        <Download className="h-4 w-4 md:mr-2" />
+                        <span className="hidden md:inline">Download</span>
+                      </Button>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </CardContent>
           </Card>
         </>
