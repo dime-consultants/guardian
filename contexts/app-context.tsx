@@ -84,11 +84,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [isInitializing, setIsInitializing] = useState(true);
 
+  // Keep browser requests same-origin so preview and production do not depend on
+  // the backend allowing every deployment origin through CORS.
+  const apiUrl = (path: string) =>
+    typeof window === "undefined"
+      ? `${backendUrl}/api/${path}`
+      : `/api/backend/${path}`;
+
   // Return the token as well as storing it so callers can use it before React re-renders.
   const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("🔄 Refreshing token...");
-      const response = await fetch(`${backendUrl}/api/auth/refresh/`, {
+      const response = await fetch(apiUrl("auth/refresh/"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -122,7 +129,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       signal?: AbortSignal;
     } = {},
   ) => {
-    const url = `${backendUrl}/api/${path}`;
+    const url = apiUrl(path);
     const headers: Record<string, string> = {};
 
     // Add Bearer token if available
@@ -184,7 +191,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       _retry?: boolean;
     } = {},
   ) => {
-    const url = `${backendUrl}/api/auth/${path}`;
+    const url = apiUrl(`auth/${path}`);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -231,7 +238,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     try {
       const response = tokenOverride
-        ? await fetch(`${backendUrl}/api/auth/me/`, {
+        ? await fetch(apiUrl("auth/me/"), {
             credentials: "include",
             headers: {
               Authorization: `Bearer ${tokenOverride}`,
@@ -302,7 +309,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       console.log("🔐 Login attempt for:", email);
 
-      const response = await fetch(`${backendUrl}/api/auth/login/`, {
+      const response = await fetch(apiUrl("auth/login/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -314,15 +321,25 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log("📊 Response status:", response.status);
 
       if (!response.ok) {
-        let errorMessage = "Login failed";
+        const responseText = await response.text();
+        let errorMessage = `Login failed (${response.status})`;
+
         try {
-          const errorData = await response.json();
+          const errorData = JSON.parse(responseText);
+          const payload = errorData.error ?? errorData;
+          const detail = payload.details;
+          const fieldMessage = detail
+            ? Object.values(detail).flat().find(Boolean)
+            : undefined;
           errorMessage =
-            errorData.detail || errorData.message || "Login failed";
-        } catch (e) {
-          console.error("Failed to parse error response");
+            payload.detail || payload.message || fieldMessage || errorMessage;
+        } catch {
+          if (responseText.trim()) {
+            errorMessage = responseText.replace(/<[^>]*>/g, " ").trim();
+          }
         }
-        throw new Error(errorMessage);
+
+        throw new Error(String(errorMessage));
       }
 
       const data = await response.json();
@@ -371,7 +388,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Logout function
   const logout = async () => {
     try {
-      await fetch(`${backendUrl}/api/auth/logout/`, {
+      await fetch(apiUrl("auth/logout/"), {
         method: "POST",
         credentials: "include",
       });
@@ -460,7 +477,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${backendUrl}/api/health/`, {
+        const response = await fetch(apiUrl("health/"), {
           method: "GET",
           credentials: "include",
           signal: AbortSignal.timeout(5000),
