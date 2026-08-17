@@ -115,10 +115,9 @@ interface AppContextUser {
 }
 
 const roleColors: Record<string, string> = {
-  admin: "bg-muted text-primary",
-  manager: "bg-muted text-secondary",
-  analyst: "bg-muted text-[#C8A248]",
-  viewer: "bg-muted text-muted-foreground",
+  admin: "bg-[#EEF2F7] text-[#0D3B8E]",
+  finance: "bg-[#EEF2F7] text-[#C8A248]",
+  viewer: "bg-[#EEF2F7] text-[#6B7280]",
 };
 
 const roleLabels: Record<string, string> = {
@@ -762,8 +761,8 @@ const UsersPage = () => {
                   className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-primary/10 text-primary">
-                      {user.full_name
+                    <AvatarFallback className="bg-[#0D3B8E]/10 text-[#0D3B8E]">
+                      {(user.full_name || user.username || "?")
                         .split(" ")
                         .map((n) => n[0])
                         .join("")
