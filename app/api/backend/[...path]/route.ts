@@ -1,14 +1,27 @@
+
 import { NextRequest } from "next/server";
 
 const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://invoicing.dimeconsultants.africa";
+
+const HOP_BY_HOP_HEADERS = [
+  "host",
+  "origin",
+  "content-length",
+  "connection",
+  "keep-alive",
+  "transfer-encoding",
+  "upgrade",
+  "proxy-authenticate",
+  "proxy-authorization",
+  "te",
+  "trailer",
+];
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
   const target = `${backendUrl.replace(/\/$/, "")}/api/${path.join("/")}/`;
   const headers = new Headers(request.headers);
-  headers.delete("host");
-  headers.delete("origin");
-  headers.delete("content-length");
+  for (const h of HOP_BY_HOP_HEADERS) headers.delete(h);
 
   const response = await fetch(target, {
     method: request.method,
