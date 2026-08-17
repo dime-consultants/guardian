@@ -84,8 +84,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Helper: Refresh token function
-  const refreshToken = async (): Promise<boolean> => {
+  // Return the token as well as storing it so callers can use it before React re-renders.
+  const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("🔄 Refreshing token...");
       const response = await fetch(`${backendUrl}/api/auth/refresh/`, {
@@ -101,14 +101,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (data.token) {
           console.log("✅ Token refreshed successfully");
           setAccessToken(data.token);
-          return true;
+          return data.token;
         }
       }
       console.log("❌ Token refresh failed");
-      return false;
+      return null;
     } catch (error) {
       console.error("Token refresh error:", error);
-      return false;
+      return null;
     }
   };
 
@@ -150,12 +150,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // If 401 and we haven't retried yet, try to refresh token
     if (response.status === 401 && accessToken && !options._retry) {
       console.log("🔐 401 detected, attempting token refresh...");
-      const refreshed = await refreshToken();
-      if (refreshed && accessToken) {
-        // Retry with new token
+      const refreshedToken = await refreshToken();
+      if (refreshedToken) {
+        // Retry with the token returned by refresh, not the stale state value.
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessToken}`;
+        retryHeaders.Authorization = `Bearer ${refreshedToken}`;
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -203,11 +203,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (response.status === 401 && accessToken && !options._retry) {
       console.log("🔐 Auth 401, refreshing token...");
-      const refreshed = await refreshToken();
-      if (refreshed && accessToken) {
+      const refreshedToken = await refreshToken();
+      if (refreshedToken) {
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessToken}`;
+        retryHeaders.Authorization = `Bearer ${refreshedToken}`;
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -223,11 +223,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Fetch user profile
-  const fetchUserProfile = async (signal?: AbortSignal) => {
+  const fetchUserProfile = async (
+    signal?: AbortSignal,
+    tokenOverride?: string | null,
+  ) => {
     if (demoMode) return;
 
     try {
-      const response = await apiFetch("auth/me/", { signal });
+      const response = tokenOverride
+        ? await fetch(`${backendUrl}/api/auth/me/`, {
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${tokenOverride}`,
+              "Content-Type": "application/json",
+            },
+            signal,
+          })
+        : await apiFetch("auth/me/", { signal });
 
       if (response.ok) {
         const data = await response.json();
@@ -316,8 +328,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       console.log("✅ Login successful");
 
-      if (data.token) {
-        setAccessToken(data.token);
+      const loginToken = data.token ?? null;
+      if (loginToken) {
+        setAccessToken(loginToken);
       }
 
       if (data.user) {
@@ -325,8 +338,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
       }
 
-      // Ensure we have full profile
-      await fetchUserProfile();
+      // Use the login token immediately; state updates are asynchronous.
+      await fetchUserProfile(undefined, loginToken);
     } catch (error) {
       console.error("❌ Login error:", error);
       throw error;
