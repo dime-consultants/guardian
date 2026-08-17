@@ -345,8 +345,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       const data = await response.json();
       console.log("✅ Login successful");
 
-      const loginToken = data.token ?? null;
-      if (loginToken) {
+      let loginToken =
+        data.access ?? data.access_token ?? data.token ?? data.tokens?.access ?? null;
+
+      // Some backend versions return only the refresh cookie from login. Exchange
+      // it immediately so the first login has an access token as well.
+      if (!loginToken) {
+        loginToken = await refreshToken();
+      } else {
         setAccessToken(loginToken);
       }
 
@@ -355,7 +361,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
       }
 
-      // Use the login token immediately; state updates are asynchronous.
+      // Use the token immediately; React state updates are asynchronous.
       await fetchUserProfile(undefined, loginToken);
     } catch (error) {
       console.error("❌ Login error:", error);
@@ -440,7 +446,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!demoMode) {
-        await fetchUserProfile(AbortSignal.timeout(5000));
+        const startupToken = await refreshToken();
+        await fetchUserProfile(AbortSignal.timeout(5000), startupToken);
       }
 
       setIsInitializing(false);

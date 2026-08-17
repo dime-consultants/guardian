@@ -21,6 +21,22 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   responseHeaders.delete("content-encoding");
   responseHeaders.delete("content-length");
 
+  // The backend may set a cookie for its own hostname. Because this request is
+  // proxied through the app, rewrite it as a host-only cookie so the browser
+  // stores the refresh token on the preview/production app origin.
+  const setCookies = response.headers.getSetCookie?.() ?? [];
+  if (setCookies.length > 0) {
+    responseHeaders.delete("set-cookie");
+    for (const cookie of setCookies) {
+      responseHeaders.append(
+        "set-cookie",
+        cookie
+          .replace(/;\\s*Domain=[^;]+/gi, "")
+          .replace(/;\\s*Path=[^;]+/gi, "; Path=/"),
+      );
+    }
+  }
+
   return new Response(response.body, {
     status: response.status,
     statusText: response.statusText,
