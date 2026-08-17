@@ -130,7 +130,7 @@ const getFileColor = (file: File) => {
   if (n.match(/\.(xlsx|xls|csv)$/i))
     return "border-green-500/30 bg-green-50 dark:bg-green-950/20";
   if (n.match(/\.pdf$/i))
-    return "border-red-500/30 bg-[#fef2f2] dark:bg-red-950/20";
+    return "border-destructive/30 bg-destructive/10";
   if (n.match(/\.json$/i))
     return "border-yellow-500/30 bg-yellow-50 dark:bg-yellow-950/20";
   if (n.match(/\.txt$/i))

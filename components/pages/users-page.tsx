@@ -115,9 +115,9 @@ interface AppContextUser {
 }
 
 const roleColors: Record<string, string> = {
-  admin: "bg-[#EEF2F7] text-[#0D3B8E]",
-  finance: "bg-[#EEF2F7] text-[#C8A248]",
-  viewer: "bg-[#EEF2F7] text-[#6B7280]",
+  admin: "bg-primary/15 text-primary",
+  finance: "bg-accent/15 text-accent-foreground",
+  viewer: "bg-muted text-muted-foreground",
 };
 
 const roleLabels: Record<string, string> = {
@@ -135,7 +135,7 @@ const roleDescriptions: Record<string, string> = {
 function PermissionDeniedState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-red-100 dark:bg-red-900/20 mb-4">
+      <div className="p-4 rounded-full bg-destructive/15 mb-4">
         <Lock className="h-10 w-10 text-destructive dark:text-red-400" />
       </div>
       <h3 className="text-xl font-semibold text-foreground mb-2">
@@ -761,7 +761,7 @@ const UsersPage = () => {
                   className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                 >
                   <Avatar className="h-10 w-10">
-                    <AvatarFallback className="bg-[#0D3B8E]/10 text-[#0D3B8E]">
+                    <AvatarFallback className="bg-primary/10 text-primary">
                       {(user.full_name || user.username || "?")
                         .split(" ")
                         .map((n) => n[0])
