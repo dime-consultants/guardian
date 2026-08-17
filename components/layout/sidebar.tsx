@@ -7,7 +7,6 @@ import { useTheme } from "next-themes";
 import {
   Users,
   Settings,
-  LogOut,
   ChevronLeft,
   ChevronRight,
   Bell,
@@ -32,6 +31,8 @@ import {
   DropdownMenuContent,
   DropdownMenuItem,
   DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
 } from "@/components/ui/dropdown-menu";
 import { useApp } from "@/contexts/app-context";
 import { ProfileCard } from "@/components/ui/profile-card";
@@ -135,36 +136,35 @@ export function Sidebar({
 
   const getNavStyle = (href: string, isActive: boolean) => {
     if (isActive) {
-      return { backgroundColor: "#0D3B8E", color: "#FFFFFF" };
+      return { backgroundColor: "var(--sidebar-primary)", color: "var(--sidebar-primary-foreground)" };
     }
     if (hoveredHref === href) {
-      return { backgroundColor: "#EEF2F7", color: "#0D3B8E" };
+      return { backgroundColor: "var(--sidebar-accent)", color: "var(--sidebar-accent-foreground)" };
     }
-    return { color: "#6B7280" };
+    return { color: "var(--sidebar-foreground)" };
   };
 
   const getIconStyle = (href: string, isActive: boolean) => {
     if (isActive) {
-      return { color: "#FFFFFF" };
+      return { color: "var(--sidebar-primary-foreground)" };
     }
     if (hoveredHref === href) {
-      return { color: "#0D3B8E" };
+      return { color: "var(--sidebar-accent-foreground)" };
     }
-    return { color: "#6B7280" };
+    return { color: "var(--sidebar-foreground)" };
   };
 
   return (
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-[100dvh] border-r transition-transform duration-300 flex flex-col",
+          "fixed left-0 top-0 z-40 h-[100dvh] border-r border-sidebar-border transition-transform duration-300 flex flex-col bg-sidebar text-sidebar-foreground",
           collapsed ? "w-16" : "w-64",
           !mobileOpen && "sidebar-hidden-mobile",
         )}
-        style={{ backgroundColor: "#FFFFFF", color: "#2B2B2B", borderColor: "#E5E7EB" }}
       >
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b" style={{ borderColor: "#E5E7EB" }}>
+        <div className="flex items-center h-16 px-4 border-b border-border">
           <Link href="/" className="flex items-center" onClick={onMobileClose}>
             <KNLogo showText={!collapsed} />
           </Link>
@@ -204,9 +204,9 @@ export function Sidebar({
                   <TooltipContent side="right" className="flex flex-col">
                     <span className="font-medium">{item.name}</span>
                     {item.description && (
-                      <span className="text-xs" style={{ color: "#6B7280" }}>
-                        {item.description}
-                      </span>
+                    <span className="text-xs text-muted-foreground">
+                      {item.description}
+                    </span>
                     )}
                   </TooltipContent>
                 </Tooltip>
@@ -218,7 +218,7 @@ export function Sidebar({
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="px-2 py-4 border-t border-[#E5E7EB] space-y-1">
+        <div className="px-2 py-4 border-t border-sidebar-border space-y-1">
           {bottomNavigation.map((item) => {
             const isActive = pathname === item.href;
             const NavLink = (
@@ -257,41 +257,13 @@ export function Sidebar({
 
             return NavLink;
           })}
-
-          {/* Logout */}
-          {collapsed ? (
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors w-full"
-                  style={{ color: "#6B7280" }}
-                  disabled
-                >
-                  <LogOut className="h-5 w-5 flex-shrink-0" />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent side="right">
-                <span className="font-medium">Use profile menu to logout</span>
-              </TooltipContent>
-            </Tooltip>
-          ) : (
-            <button
-              className="flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors cursor-not-allowed opacity-50 w-full"
-              style={{ color: "#6B7280" }}
-              disabled
-            >
-              <LogOut className="h-5 w-5 flex-shrink-0" />
-              <span className="text-sm font-medium">Log Out</span>
-            </button>
-          )}
         </div>
 
         {/* Collapse Toggle — desktop only */}
         <Button
           variant="ghost"
           size="icon"
-          className="absolute -right-3 top-20 h-6 w-6 rounded-full border shadow-sm hover:bg-[#EEF2F7] hidden md:flex"
-          style={{ borderColor: "#E5E7EB", backgroundColor: "#FFFFFF", color: "#2B2B2B" }}
+          className="absolute -right-3 top-20 h-6 w-6 rounded-full border shadow-sm hover:bg-sidebar-accent hidden md:flex border-sidebar-border bg-sidebar text-sidebar-foreground"
           onClick={() => onCollapsedChange(!collapsed)}
         >
           {collapsed ? (
@@ -314,20 +286,20 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { demoMode, setDemoMode, backendConnected } = useApp();
 
   return (
-    <header className="flex-shrink-0 z-30 h-16 bg-white border-b flex items-center justify-between px-4 md:px-6" style={{ borderColor: "#E5E7EB" }}>
+    <header className="flex-shrink-0 z-30 h-16 bg-background border-b border-border flex items-center justify-between px-4 md:px-6">
       <div className="flex items-center gap-2 md:gap-4">
         {/* Mobile hamburger */}
         <Button
           variant="ghost"
           size="icon"
-          className="md:hidden h-11 w-11"
+          className="md:hidden h-11 w-11 text-foreground"
           onClick={onMobileMenuToggle}
         >
-          <Menu className="h-5 w-5" style={{ color: "#2B2B2B" }} />
+          <Menu className="h-5 w-5" />
         </Button>
         {/* Logo icon on mobile — full title too wide for phone header */}
         <KNLogo showText={false} size="sm" className="md:hidden" />
-        <h1 className="hidden md:block text-lg font-semibold" style={{ color: "#2B2B2B" }}>
+        <h1 className="hidden md:block text-lg font-semibold text-foreground">
           Guardian Financial Tool
         </h1>
       </div>
@@ -345,7 +317,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                   ? "text-amber-600 dark:text-amber-400"
                   : backendConnected
                     ? "text-green-600 dark:text-green-400"
-                    : "text-[#6B7280]",
+                    : "text-muted-foreground",
               )}
             >
               {demoMode ? (
@@ -366,16 +338,16 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
                   ? "Live: Connected to backend"
                   : "Offline: Backend disconnected"}
             </p>
-            <p className="text-xs" style={{ color: "#6B7280" }}>Click to toggle</p>
+            <p className="text-xs text-muted-foreground">Click to toggle</p>
           </TooltipContent>
         </Tooltip>
 
         {/* Theme Toggle */}
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" style={{ color: "#2B2B2B" }} />
-              <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" style={{ color: "#2B2B2B" }} />
+            <Button variant="ghost" size="icon" className="relative">
+              <Sun className="h-5 w-5 sun-icon text-foreground" />
+              <Moon className="absolute h-5 w-5 moon-icon text-foreground" />
               <span className="sr-only">Toggle theme</span>
             </Button>
           </DropdownMenuTrigger>
@@ -396,14 +368,52 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         </DropdownMenu>
 
         {/* Notifications */}
-        <Button variant="ghost" size="icon" className="relative hidden sm:flex">
-          <Bell className="h-5 w-5" style={{ color: "#2B2B2B" }} />
-          <span className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center text-[10px] rounded-full font-medium" style={{ backgroundColor: "#C8A248", color: "#FFFFFF" }}>
-            3
-          </span>
-        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="relative hidden sm:flex text-foreground">
+              <Bell className="h-5 w-5" />
+              <span className="absolute -top-0.5 -right-0.5 h-4 w-4 flex items-center justify-center text-[10px] rounded-full font-medium bg-brand-accent text-brand-accent-foreground">
+                3
+              </span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-80">
+            <DropdownMenuLabel>Notifications</DropdownMenuLabel>
+            <DropdownMenuSeparator />
+            <div className="flex flex-col gap-1 p-1">
+              <div className="flex items-start gap-3 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-default">
+                <div className="w-2 h-2 rounded-full bg-brand-accent mt-1.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">New report generated</p>
+                  <p className="text-xs text-muted-foreground">Weekly reconciliation report is ready</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">2 minutes ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-default">
+                <div className="w-2 h-2 rounded-full bg-brand-accent mt-1.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">Silent Arrears flagged</p>
+                  <p className="text-xs text-muted-foreground">6 accounts detected in batch #48213</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">1 hour ago</p>
+                </div>
+              </div>
+              <div className="flex items-start gap-3 p-2 rounded-md hover:bg-accent hover:text-accent-foreground transition-colors cursor-default">
+                <div className="w-2 h-2 rounded-full bg-brand-accent mt-1.5 flex-shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-medium truncate">System update complete</p>
+                  <p className="text-xs text-muted-foreground">Guardian Financial Tool updated to v2.4.1</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">3 hours ago</p>
+                </div>
+              </div>
+            </div>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem className="cursor-pointer justify-center text-center text-primary">
+              View all notifications
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
 
-        <div className="h-8 w-px bg-[#E5E7EB] hidden sm:block" />
+        <div className="h-8 w-px bg-border hidden sm:block" />
 
         {/* Profile Card */}
         <ProfileCard />
