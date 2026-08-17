@@ -151,7 +151,7 @@ function getStatusColor(status: string) {
     case "skipped":
       return "bg-muted text-destructive";
     default:
-      return "bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-400";
+      return "bg-muted text-muted-foreground";
   }
 }
 
@@ -484,14 +484,14 @@ export function UploadsPage() {
                 </div>
               </div>
               {!demoMode && selectedFileIds.size > 0 && (
-                <div className="flex items-center justify-between gap-2 mt-3 p-2.5 rounded-lg bg-[#0D3B8E]/5 border border-[#0D3B8E]/20">
-                  <span className="text-xs text-[#0D3B8E] font-medium">
+                <div className="flex items-center justify-between gap-2 mt-3 p-2.5 rounded-lg bg-primary/5 border border-primary/20">
+                  <span className="text-xs text-primary font-medium">
                     {selectedFileIds.size} file{selectedFileIds.size === 1 ? "" : "s"} selected
                   </span>
                   <div className="flex items-center gap-2">
                     <Button
                       size="sm"
-                      className="h-7 text-xs px-3 bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
+                      className="h-7 text-xs px-3 bg-primary text-primary-foreground hover:bg-primary/90"
                       onClick={() => setShowBatchToolDialog(true)}
                     >
                       <Wrench className="h-3 w-3 mr-1.5" />
@@ -517,7 +517,7 @@ export function UploadsPage() {
                     checked={allVisibleSelected}
                     onCheckedChange={toggleSelectAll}
                   />
-                  <Label htmlFor="select-all-files" className="text-xs text-[#6B7280] cursor-pointer">
+                  <Label htmlFor="select-all-files" className="text-xs text-muted-foreground cursor-pointer">
                     Select all
                   </Label>
                 </div>
