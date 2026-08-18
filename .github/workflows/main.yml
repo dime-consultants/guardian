@@ -2,32 +2,37 @@ name: Build Image & Trigger Deployment
 
 on:
   push:
-    branches: ["develop", "main", "master"]
+    branches:
+      - develop
+      - main
+      - master
 
 jobs:
   build-and-trigger:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout repository
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Prepare environment, image tag, compose file, and secrets payload
       - name: 2. Prepare Deployment Metadata
         id: prepare
         shell: bash
         run: |
-          # Determine environment
+          # Determine deployment environment from branch
           if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
             ENV_NAME="prod"
+            NODE_ENV="production"
+            COMPOSE_FILE="docker-compose.yml"
+          elif [[ "${{ github.ref_name }}" == "develop" ]]; then
+            ENV_NAME="stage"
+            NODE_ENV="stage"
             COMPOSE_FILE="docker-compose.yml"
           else
-            ENV_NAME="stage"
-            COMPOSE_FILE="docker-compose.stage.yml"
+            echo "Error: unsupported branch '${{ github.ref_name }}'"
+            exit 1
           fi
 
-          # Generate image tag
+          # Generate Docker image tag
           IMAGE_NAME="qb-ui"
           TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${TIMESTAMP}"
@@ -38,19 +43,14 @@ jobs:
             exit 1
           fi
 
-          # Encode compose file
+          # Encode compose file for repository dispatch payload
           COMPOSE_B64=$(base64 -w 0 "$COMPOSE_FILE")
 
-          # Prepare environment secrets
-          #
-          # Add secrets here when needed, for example:
-          #
-          # declare -A secrets=(
-          #   ["API_KEY"]="${{ secrets.API_KEY }}"
-          #   ["DATABASE_URL"]="${{ secrets.DATABASE_URL }}"
-          # )
-          #
-          declare -A secrets=()
+          # Variables/secrets that the infrastructure deployment
+          # should expose before running docker compose.
+          declare -A secrets=(
+            ["NODE_ENV"]="$NODE_ENV"
+          )
 
           SECRETS_JSON="{}"
 
@@ -65,14 +65,16 @@ jobs:
 
           SECRETS_JSON=$(echo "$SECRETS_JSON" | jq -c .)
 
-          # Outputs
+          # GitHub Actions outputs
           echo "env=$ENV_NAME" >> "$GITHUB_OUTPUT"
+          echo "node_env=$NODE_ENV" >> "$GITHUB_OUTPUT"
           echo "compose_file=$COMPOSE_FILE" >> "$GITHUB_OUTPUT"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
           echo "compose_b64=$COMPOSE_B64" >> "$GITHUB_OUTPUT"
           echo "secrets_json=$SECRETS_JSON" >> "$GITHUB_OUTPUT"
 
           echo "Environment: $ENV_NAME"
+          echo "NODE_ENV: $NODE_ENV"
           echo "Compose file: $COMPOSE_FILE"
           echo "Image tag: $IMAGE_TAG"
 
@@ -108,6 +110,7 @@ jobs:
               "app_repo": "${{ github.repository }}",
               "branch": "${{ github.ref_name }}",
               "env": "${{ steps.prepare.outputs.env }}",
+              "node_env": "${{ steps.prepare.outputs.node_env }}",
               "sha": "${{ github.sha }}",
               "image_tag": "${{ steps.prepare.outputs.image_tag }}",
               "docker_compose_b64": "${{ steps.prepare.outputs.compose_b64 }}",
