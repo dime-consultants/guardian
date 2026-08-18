@@ -24,7 +24,7 @@ jobs:
             COMPOSE_FILE="docker-compose.yml"
           else
             ENV_NAME="stage"
-            COMPOSE_FILE="docker-compose.stage.yml"
+            COMPOSE_FILE="docker-compose.yml"
           fi
 
           # Generate image tag
