@@ -2,90 +2,103 @@ name: Build Image & Trigger Deployment
 
 on:
   push:
-    branches: ["develop", "main"]
+    branches: ["develop", "main", "master"]
 
 jobs:
   build-and-trigger:
     runs-on: ubuntu-latest
+
     steps:
-      - name: Checkout
+      # 1. Checkout repository
+      - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Set up QEMU
-        uses: docker/setup-qemu-action@v3
-
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Login to Docker Hub
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_TOKEN }}
-
-      - name: Determine environment & select compose file
-        id: env
+      # 2. Prepare environment, image tag, compose file, and secrets payload
+      - name: 2. Prepare Deployment Metadata
+        id: prepare
+        shell: bash
         run: |
+          # Determine environment
           if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
-            echo "env=prod" >> $GITHUB_OUTPUT
-            echo "compose_file=docker-compose.yml" >> $GITHUB_OUTPUT
+            ENV_NAME="prod"
+            COMPOSE_FILE="docker-compose.yml"
           else
-            echo "env=stage" >> $GITHUB_OUTPUT
-            echo "compose_file=docker-compose.stage.yml" >> $GITHUB_OUTPUT
+            ENV_NAME="stage"
+            COMPOSE_FILE="docker-compose.stage.yml"
           fi
 
-      - name: Generate Docker Image Tag
-        id: tag
-        run: |
+          # Generate image tag
           IMAGE_NAME="qb-ui"
           TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
-          ENV_NAME="${{ steps.env.outputs.env }}"
-
-          # Include environment in tag for clarity and safety
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${TIMESTAMP}"
 
-          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
-          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
-          echo "Generated Docker image tag: $IMAGE_TAG"
-
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v6
-        with:
-          context: .
-          push: true
-          tags: ${{ steps.tag.outputs.image_tag }}
-          platforms: linux/amd64
-
-      - name: Encode selected docker-compose file
-        id: compose
-        run: |
-          COMPOSE_FILE="${{ steps.env.outputs.compose_file }}"
+          # Validate compose file
           if [ ! -f "$COMPOSE_FILE" ]; then
-            echo "Error: $COMPOSE_FILE not found in repository!"
+            echo "Error: $COMPOSE_FILE not found"
             exit 1
           fi
-          COMPOSE_B64=$(base64 -w 0 "$COMPOSE_FILE")
-          echo "b64=$COMPOSE_B64" >> $GITHUB_OUTPUT
 
-      - name: Prepare env_secrets payload
-        id: prepare_secrets
-        run: |
+          # Encode compose file
+          COMPOSE_B64=$(base64 -w 0 "$COMPOSE_FILE")
+
+          # Prepare environment secrets
+          #
+          # Add secrets here when needed, for example:
+          #
+          # declare -A secrets=(
+          #   ["API_KEY"]="${{ secrets.API_KEY }}"
+          #   ["DATABASE_URL"]="${{ secrets.DATABASE_URL }}"
+          # )
+          #
           declare -A secrets=()
 
-          json="{}"
+          SECRETS_JSON="{}"
 
           for key in "${!secrets[@]}"; do
             value="${secrets[$key]}"
+
             if [ -n "$value" ]; then
-              json=$(echo "$json" | jq --arg k "$key" --arg v "$value" '.[$k] = $v')
+              SECRETS_JSON=$(echo "$SECRETS_JSON" | \
+                jq --arg k "$key" --arg v "$value" '.[$k] = $v')
             fi
           done
 
-          compact=$(echo "$json" | jq -c .)
-          echo "secrets_json=$compact" >> $GITHUB_OUTPUT
+          SECRETS_JSON=$(echo "$SECRETS_JSON" | jq -c .)
 
-      - name: Trigger Deployment in Infra Repo
-        uses: peter-evans/repository-dispatch@v3
+          # Outputs
+          echo "env=$ENV_NAME" >> "$GITHUB_OUTPUT"
+          echo "compose_file=$COMPOSE_FILE" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
+          echo "compose_b64=$COMPOSE_B64" >> "$GITHUB_OUTPUT"
+          echo "secrets_json=$SECRETS_JSON" >> "$GITHUB_OUTPUT"
+
+          echo "Environment: $ENV_NAME"
+          echo "Compose file: $COMPOSE_FILE"
+          echo "Image tag: $IMAGE_TAG"
+
+      # 3. Login, build, and push Docker image
+      - name: 3. Build & Push Docker Image
+        shell: bash
+        env:
+          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
+          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
+          IMAGE_TAG: ${{ steps.prepare.outputs.image_tag }}
+        run: |
+          echo "$DOCKERHUB_TOKEN" | \
+            docker login \
+              -u "$DOCKERHUB_USERNAME" \
+              --password-stdin
+
+          docker build \
+            --platform linux/amd64 \
+            -t "$IMAGE_TAG" \
+            .
+
+          docker push "$IMAGE_TAG"
+
+      # 4. Trigger infrastructure deployment
+      - name: 4. Trigger Infrastructure Deployment
+        uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.INFRA_PAT }}
           repository: stevendegwa/infra
@@ -94,9 +107,9 @@ jobs:
             {
               "app_repo": "${{ github.repository }}",
               "branch": "${{ github.ref_name }}",
-              "env": "${{ steps.env.outputs.env }}",
+              "env": "${{ steps.prepare.outputs.env }}",
               "sha": "${{ github.sha }}",
-              "image_tag": "${{ steps.tag.outputs.image_tag }}",
-              "docker_compose_b64": "${{ steps.compose.outputs.b64 }}",
-              "env_secrets": ${{ steps.prepare_secrets.outputs.secrets_json }}
+              "image_tag": "${{ steps.prepare.outputs.image_tag }}",
+              "docker_compose_b64": "${{ steps.prepare.outputs.compose_b64 }}",
+              "env_secrets": ${{ steps.prepare.outputs.secrets_json }}
             }
