@@ -6,7 +6,7 @@ services:
     image: ${IMAGE_TAG}
 
     ports:
-      - ${API_PORT}:3000"
+      - ${API_PORT}:3005"
 
     environment:
       - NODE_ENV=${NODE_ENV}
