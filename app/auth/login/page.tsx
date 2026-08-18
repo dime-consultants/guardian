@@ -51,12 +51,12 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Get started with Guardian"
-      subtitle="Sign in to continue loan reconciliation, arrears verification, and account review."
+      title="Login"
+      subtitle="We suggest using the email address you use at work."
       footer={
         <p className="text-center text-[13px] text-[#64748B]">
-          Don't have an account?{" "}
-          <Link href="/auth/signup" className="font-semibold text-[#0F172A]">
+          You don't have an account yet?{" "}
+          <Link href="/auth/signup" className="font-semibold text-[#0D3B8E]">
             Sign up
           </Link>
         </p>
@@ -71,16 +71,16 @@ export default function LoginPage() {
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[12px] text-[#0F172A]">
-            Email
+            Address email
           </Label>
           <Input
             id="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="name@company.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={isLoading}
-            className="h-10 rounded-md border-[#E2E8F0] bg-white text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+            className="h-10 rounded-md border-[#CBD5E1] bg-white text-[13px] shadow-[0_1px_2px_rgba(15,23,42,0.04)] placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
           />
         </div>
 
@@ -96,7 +96,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={isLoading}
-              className="h-10 rounded-md border-[#E2E8F0] bg-white pr-10 text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+              className="h-10 rounded-md border-[#0D3B8E] bg-white pr-10 text-[13px] shadow-[0_0_0_1px_rgba(13,59,142,0.08)] placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
             />
             <button
               type="button"
@@ -111,12 +111,17 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+          <div className="text-right">
+            <Link href="#" className="text-[12px] text-[#64748B] transition hover:text-[#0D3B8E]">
+              Forgot password
+            </Link>
+          </div>
         </div>
 
         <Button
           type="submit"
           disabled={isLoading || !email || !password}
-          className="h-10 w-full rounded-md bg-[#111111] text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.16)] hover:bg-[#0D3B8E]"
+          className="h-10 w-full rounded-md bg-[#0D3B8E] text-[13px] font-semibold text-white shadow-[0_8px_16px_rgba(13,59,142,0.18)] hover:bg-[#0B3278]"
         >
           {isLoading ? (
             <>
@@ -124,7 +129,7 @@ export default function LoginPage() {
               Logging in...
             </>
           ) : (
-            "Log in with email"
+            "Login"
           )}
         </Button>
       </form>
