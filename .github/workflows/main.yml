@@ -10,13 +10,10 @@ on:
 jobs:
   build-and-trigger:
     runs-on: ubuntu-latest
-
     steps:
-      # 1. Checkout repository
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
 
-      # 2. Prepare environment, image tag, compose file, and deployment variables
       - name: 2. Prepare Deployment Metadata
         id: prepare
         shell: bash
