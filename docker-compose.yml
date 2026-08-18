@@ -4,11 +4,14 @@ services:
   guardian-ui:
     container_name: guardian_ui
     image: ${IMAGE_TAG}
+
     ports:
       - "3010:3000"
+
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=${NODE_ENV}
       - PORT=3000
+
     networks:
       - prod-network
 
