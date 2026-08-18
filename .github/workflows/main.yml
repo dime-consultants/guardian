@@ -1,0 +1,102 @@
+name: Build Image & Trigger Deployment
+
+on:
+  push:
+    branches: ["develop", "main"]
+
+jobs:
+  build-and-trigger:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v3
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Determine environment & select compose file
+        id: env
+        run: |
+          if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
+            echo "env=prod" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.yml" >> $GITHUB_OUTPUT
+          else
+            echo "env=stage" >> $GITHUB_OUTPUT
+            echo "compose_file=docker-compose.stage.yml" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Generate Docker Image Tag
+        id: tag
+        run: |
+          IMAGE_NAME="qb-ui"
+          TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
+          ENV_NAME="${{ steps.env.outputs.env }}"
+
+          # Include environment in tag for clarity and safety
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${TIMESTAMP}"
+
+          echo "image_tag=$IMAGE_TAG" >> $GITHUB_OUTPUT
+          echo "timestamp=$TIMESTAMP" >> $GITHUB_OUTPUT
+          echo "Generated Docker image tag: $IMAGE_TAG"
+
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: ${{ steps.tag.outputs.image_tag }}
+          platforms: linux/amd64
+
+      - name: Encode selected docker-compose file
+        id: compose
+        run: |
+          COMPOSE_FILE="${{ steps.env.outputs.compose_file }}"
+          if [ ! -f "$COMPOSE_FILE" ]; then
+            echo "Error: $COMPOSE_FILE not found in repository!"
+            exit 1
+          fi
+          COMPOSE_B64=$(base64 -w 0 "$COMPOSE_FILE")
+          echo "b64=$COMPOSE_B64" >> $GITHUB_OUTPUT
+
+      - name: Prepare env_secrets payload
+        id: prepare_secrets
+        run: |
+          declare -A secrets=()
+
+          json="{}"
+
+          for key in "${!secrets[@]}"; do
+            value="${secrets[$key]}"
+            if [ -n "$value" ]; then
+              json=$(echo "$json" | jq --arg k "$key" --arg v "$value" '.[$k] = $v')
+            fi
+          done
+
+          compact=$(echo "$json" | jq -c .)
+          echo "secrets_json=$compact" >> $GITHUB_OUTPUT
+
+      - name: Trigger Deployment in Infra Repo
+        uses: peter-evans/repository-dispatch@v3
+        with:
+          token: ${{ secrets.INFRA_PAT }}
+          repository: stevendegwa/infra
+          event-type: deploy-app
+          client-payload: |
+            {
+              "app_repo": "${{ github.repository }}",
+              "branch": "${{ github.ref_name }}",
+              "env": "${{ steps.env.outputs.env }}",
+              "sha": "${{ github.sha }}",
+              "image_tag": "${{ steps.tag.outputs.image_tag }}",
+              "docker_compose_b64": "${{ steps.compose.outputs.b64 }}",
+              "env_secrets": ${{ steps.prepare_secrets.outputs.secrets_json }}
+            }
