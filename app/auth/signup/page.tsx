@@ -5,11 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import {
-  AuthDivider,
-  AuthShell,
-  ProviderButtons,
-} from "@/components/auth/auth-shell";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -98,16 +94,16 @@ export default function SignupPage() {
       title="Create your Guardian account"
       subtitle="Join Guardian Financial Tool securely with your work profile."
       footer={
-        <p className="text-center text-[13px] text-[#64748B]">
+        <p className="text-center text-[13px] text-muted-foreground">
           Already have an account?{" "}
-          <Link href="/auth/login" className="font-semibold text-[#0F172A]">
+          <Link href="/auth/login" className="font-semibold text-primary">
             Sign in
           </Link>
         </p>
       }
     >
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
+        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
           {error}
         </div>
       )}
@@ -155,7 +151,7 @@ export default function SignupPage() {
         />
 
         {formData.password && (
-          <div className="h-1.5 overflow-hidden rounded-full bg-[#EEF2F7]">
+          <div className="h-1.5 overflow-hidden rounded-full bg-muted">
             <div
               className="h-full rounded-full transition-all"
               style={{
@@ -202,7 +198,7 @@ export default function SignupPage() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="h-10 w-full rounded-md bg-[#111111] text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.16)] hover:bg-[#0D3B8E]"
+          className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
         >
           {isLoading ? (
             <>
@@ -214,9 +210,6 @@ export default function SignupPage() {
           )}
         </Button>
       </form>
-
-      <AuthDivider />
-      <ProviderButtons />
     </AuthShell>
   );
 }
@@ -244,7 +237,7 @@ function AuthField({
 }: AuthFieldProps) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[12px] text-[#0F172A]">
+      <Label htmlFor={id} className="text-[12px] text-foreground">
         {label}
       </Label>
       <Input
@@ -255,7 +248,7 @@ function AuthField({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className="h-10 rounded-md border-[#E2E8F0] bg-white text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+        className="h-10 rounded-md border-border bg-card text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
       />
     </div>
   );
@@ -279,7 +272,7 @@ function PasswordField({
 }: PasswordFieldProps) {
   return (
     <div className="space-y-1.5">
-      <Label htmlFor={id} className="text-[12px] text-[#0F172A]">
+      <Label htmlFor={id} className="text-[12px] text-foreground">
         {label}
       </Label>
       <div className="relative">
@@ -291,12 +284,12 @@ function PasswordField({
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className="h-10 rounded-md border-[#E2E8F0] bg-white pr-10 text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+          className="h-10 rounded-md border-border bg-card pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
         />
         <button
           type="button"
           onClick={onToggle}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] transition hover:text-[#0D3B8E]"
+          className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-primary"
           aria-label={visible ? "Hide password" : "Show password"}
         >
           {visible ? <EyeOff className="size-4" /> : <Eye className="size-4" />}
@@ -307,7 +300,7 @@ function PasswordField({
 }
 
 function getPasswordStrength(password: string) {
-  if (!password) return { value: 0, color: "#E2E8F0" };
+  if (!password) return { value: 0, color: "var(--border)" };
 
   const checks = [
     password.length >= 8,
@@ -318,8 +311,8 @@ function getPasswordStrength(password: string) {
 
   const value = checks.filter(Boolean).length * 25;
 
-  if (value <= 25) return { value, color: "#EF4444" };
-  if (value <= 75) return { value, color: "#F59E0B" };
+  if (value <= 25) return { value, color: "var(--destructive)" };
+  if (value <= 75) return { value, color: "var(--warning)" };
 
-  return { value, color: "#10B981" };
+  return { value, color: "var(--success)" };
 }

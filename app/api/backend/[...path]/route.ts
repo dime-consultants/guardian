@@ -23,16 +23,39 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
   const headers = new Headers(request.headers);
   for (const h of HOP_BY_HOP_HEADERS) headers.delete(h);
 
-  const response = await fetch(target, {
-    method: request.method,
-    headers,
-    body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.arrayBuffer(),
-    redirect: "manual",
-  });
+  let response: Response;
+  try {
+    response = await fetch(target, {
+      method: request.method,
+      headers,
+      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.arrayBuffer(),
+      redirect: "manual",
+      signal: AbortSignal.timeout(8000),
+    });
+  } catch {
+    return Response.json(
+      {
+        detail: "Backend request timed out or the backend is unreachable.",
+        backend: backendUrl,
+      },
+      { status: 504 },
+    );
+  }
 
   const responseHeaders = new Headers(response.headers);
   responseHeaders.delete("content-encoding");
   responseHeaders.delete("content-length");
+
+  const responseContentType = response.headers.get("content-type") ?? "";
+  if (response.status >= 500 && responseContentType.includes("text/html")) {
+    return Response.json(
+      {
+        detail: "The backend returned a server error.",
+        status: response.status,
+      },
+      { status: response.status },
+    );
+  }
 
   // The backend may set a cookie for its own hostname. Because this request is
   // proxied through the app, rewrite it as a host-only cookie so the browser

@@ -16,9 +16,9 @@
   --secondary-foreground: #0D3B8E;
   --muted: #F1F5F9;
   --muted-foreground: #64748B;
-  --accent: #1F5FBF;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --accent: #DCE8F8;
+  --accent-foreground: #0D3B8E;
+  --destructive: #D45757;
   --destructive-foreground: #FFFFFF;
   --border: #E2E8F0;
   --input: #FFFFFF;
@@ -27,24 +27,25 @@
   --chart-2: #1F5FBF;
   --chart-3: #C8A248;
   --chart-4: #64748B;
-  --chart-5: #EEF2F7;
+  --chart-5: #D45757;
   --radius: 0.5rem;
   --sidebar: #FFFFFF;
   --sidebar-foreground: #1E293B;
   --sidebar-primary: #0D3B8E;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #F1F5F9;
+  --sidebar-accent: #EEF2F7;
   --sidebar-accent-foreground: #0D3B8E;
   --sidebar-border: #E2E8F0;
   --sidebar-ring: #0D3B8E;
   --brand-accent: #C8A248;
   --brand-accent-foreground: #FFFFFF;
-  --success: #10B981;
+  --success: #26946F;
   --success-foreground: #FFFFFF;
-  --warning: #F59E0B;
+  --warning: #B98218;
   --warning-foreground: #1E293B;
-  --error: #EF4444;
+  --error: #D45757;
   --error-foreground: #FFFFFF;
+  --shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.07);
 }
 
 .dark {
@@ -54,45 +55,46 @@
   --card-foreground: #F1F5F9;
   --popover: #1E293B;
   --popover-foreground: #F1F5F9;
-  --primary: #3B82F6;
+  --primary: #7DA7F5;
   --primary-foreground: #FFFFFF;
   --secondary: #334155;
   --secondary-foreground: #F1F5F9;
   --muted: #334155;
   --muted-foreground: #94A3B8;
-  --accent: #2563EB;
-  --accent-foreground: #FFFFFF;
-  --destructive: #EF4444;
+  --accent: #244A82;
+  --accent-foreground: #F1F5F9;
+  --destructive: #E17777;
   --destructive-foreground: #FFFFFF;
   --border: #334155;
   --input: #1E293B;
-  --ring: #3B82F6;
-  --chart-1: #3B82F6;
-  --chart-2: #2563EB;
-  --chart-3: #F59E0B;
+  --ring: #7DA7F5;
+  --chart-1: #7DA7F5;
+  --chart-2: #4F7DD3;
+  --chart-3: #D8B75E;
   --chart-4: #94A3B8;
-  --chart-5: #334155;
+  --chart-5: #E17777;
   --sidebar: #0F172A;
   --sidebar-foreground: #F1F5F9;
-  --sidebar-primary: #3B82F6;
-  --sidebar-primary-foreground: #FFFFFF;
+  --sidebar-primary: #7DA7F5;
+  --sidebar-primary-foreground: #0F172A;
   --sidebar-accent: #334155;
   --sidebar-accent-foreground: #F1F5F9;
   --sidebar-border: #334155;
-  --sidebar-ring: #3B82F6;
-  --brand-accent: #F59E0B;
+  --sidebar-ring: #7DA7F5;
+  --brand-accent: #D8B75E;
   --brand-accent-foreground: #0F172A;
-  --success: #10B981;
+  --success: #53B894;
   --success-foreground: #FFFFFF;
-  --warning: #F59E0B;
+  --warning: #D8B75E;
   --warning-foreground: #0F172A;
-  --error: #EF4444;
+  --error: #E17777;
   --error-foreground: #FFFFFF;
+  --shadow-soft: 0 12px 32px rgba(0, 0, 0, 0.26);
 }
 
 @theme inline {
-  --font-sans: 'Geist', 'Geist Fallback', system-ui, sans-serif;
-  --font-mono: 'Geist Mono', 'Geist Mono Fallback', monospace;
+  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --color-card: var(--card);
@@ -261,7 +263,7 @@
 .auth-scroll {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: #0D3B8E transparent;
+  scrollbar-color: var(--primary) transparent;
 }
 .auth-scroll::-webkit-scrollbar {
   width: 8px;
@@ -270,25 +272,25 @@
   background: transparent;
 }
 .auth-scroll::-webkit-scrollbar-thumb {
-  background-color: #0D3B8E;
+  background-color: var(--primary);
   border-radius: 9999px;
 }
 .auth-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: #0D3B8E;
+  background-color: var(--primary);
   border-radius: 9999px;
 }
 
 .auth-gradient {
   background:
-    radial-gradient(circle at 24% 12%, rgba(13, 59, 142, 0.08), transparent 30%),
-    radial-gradient(circle at 76% 18%, rgba(200, 162, 72, 0.12), transparent 34%),
-    linear-gradient(180deg, #FBFCFE 0%, #F8F9FB 42%, #FFFFFF 100%);
+    radial-gradient(circle at 24% 12%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 30%),
+    radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--brand-accent) 12%, transparent), transparent 34%),
+    linear-gradient(180deg, var(--card) 0%, var(--background) 42%, var(--card) 100%);
 }
 
 .auth-visual {
   background:
-    radial-gradient(circle at 57% 78%, rgba(13, 59, 142, 0.1), transparent 18%),
-    linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(248, 249, 251, 0.8) 52%, #FFFFFF 100%);
+    radial-gradient(circle at 57% 78%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 18%),
+    linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent) 0%, color-mix(in srgb, var(--background) 82%, transparent) 52%, var(--card) 100%);
 }
 
 .auth-grid-plane {
@@ -320,14 +322,14 @@
   top: 40%;
   height: 40%;
   width: 1px;
-  background: linear-gradient(180deg, transparent, rgba(13, 59, 142, 0.34), rgba(200, 162, 72, 0.22), transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--primary) 34%, transparent), color-mix(in srgb, var(--brand-accent) 24%, transparent), transparent);
 }
 
 .auth-pulse {
   position: absolute;
   bottom: 18.2%;
   left: 56%;
-  border: 1px solid rgba(13, 59, 142, 0.18);
+  border: 1px solid color-mix(in srgb, var(--primary) 18%, transparent);
   border-radius: 9999px;
   transform: translate(-50%, 50%);
 }
@@ -345,12 +347,4 @@
 .auth-pulse-three {
   width: 146px;
   height: 146px;
-}
-
-/* Material Symbols icon font - loaded globally for sidebar + dashboard */
-.material-symbols-outlined {
-  font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24;
-}
-.filled-icon {
-  font-variation-settings: 'FILL' 1, 'wght' 400, 'GRAD' 0, 'opsz' 24;
 }

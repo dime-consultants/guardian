@@ -1,12 +1,19 @@
 "use client";
 
-import { useState, type CSSProperties } from "react";
+import { useState, type ComponentType } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTheme } from "next-themes";
 import {
   Users,
   Settings,
+  BarChart3,
+  Bot,
+  Folder,
+  Hammer,
+  LayoutDashboard,
+  MessageCircle,
+  ScrollText,
   ChevronLeft,
   ChevronRight,
   Bell,
@@ -16,6 +23,7 @@ import {
   ToggleLeft,
   ToggleRight,
   Menu,
+  type LucideProps,
 } from "lucide-react";
 import { KNLogo } from "@/components/ui/kn-logo";
 import { cn } from "@/lib/utils";
@@ -37,70 +45,48 @@ import {
 import { useApp } from "@/contexts/app-context";
 import { ProfileCard } from "@/components/ui/profile-card";
 
-function MaterialIcon({
-  name,
-  className = "",
-  filled = false,
-  size = 20,
-  style = {},
-}: {
-  name: string;
-  className?: string;
-  filled?: boolean;
-  size?: number;
-  style?: CSSProperties;
-}) {
-  return (
-    <span
-      className={`material-symbols-outlined ${filled ? "filled-icon" : ""} ${className}`}
-      style={{ fontSize: size, lineHeight: 1, ...style }}
-      aria-hidden="true"
-    >
-      {name}
-    </span>
-  );
-}
+type NavIcon = ComponentType<LucideProps>;
 
 const navigation = [
   {
     name: "Dashboard",
     href: "/",
-    icon: "dashboard",
+    icon: LayoutDashboard,
   },
   {
     name: "AI Engine",
     href: "/ai-engine",
-    icon: "psychology",
+    icon: Bot,
     description: "AI-powered analysis & insights",
   },
   {
     name: "Chat Assistant",
     href: "/chat",
-    icon: "chat_bubble",
+    icon: MessageCircle,
     description: "Real-time AI assistant",
   },
   {
     name: "Data Tools",
     href: "/tools",
-    icon: "build",
+    icon: Hammer,
     description: "Processing & conversion",
   },
   {
     name: "File Manager",
     href: "/uploads",
-    icon: "folder",
+    icon: Folder,
     description: "Upload & manage files",
   },
   {
     name: "Reports",
     href: "/reports",
-    icon: "summarize",
+    icon: ScrollText,
     description: "Generated reports",
   },
   {
     name: "Analytics",
     href: "/analytics",
-    icon: "insights",
+    icon: BarChart3,
     description: "Performance metrics",
   },
 ];
@@ -109,12 +95,12 @@ const bottomNavigation = [
   {
     name: "User Management",
     href: "/users",
-    icon: "people",
+    icon: Users,
   },
   {
     name: "Settings",
     href: "/settings",
-    icon: "settings",
+    icon: Settings,
   },
 ];
 
@@ -174,6 +160,7 @@ export function Sidebar({
         <nav className="flex-1 px-2 py-4 space-y-1 overflow-y-auto sidebar-scroll">
           {navigation.map((item) => {
             const isActive = pathname === item.href;
+            const Icon = item.icon as NavIcon;
             const NavLink = (
               <Link
                 key={item.name}
@@ -186,11 +173,7 @@ export function Sidebar({
                 )}
                 style={getNavStyle(item.href, isActive)}
               >
-                <MaterialIcon
-                  name={item.icon}
-                  className="h-5 w-5 flex-shrink-0"
-                  style={getIconStyle(item.href, isActive)}
-                />
+                <Icon className="h-5 w-5 flex-shrink-0" style={getIconStyle(item.href, isActive)} />
                 {!collapsed && (
                   <span className="text-sm font-medium">{item.name}</span>
                 )}
@@ -221,6 +204,7 @@ export function Sidebar({
         <div className="px-2 py-4 border-t border-sidebar-border space-y-1">
           {bottomNavigation.map((item) => {
             const isActive = pathname === item.href;
+            const Icon = item.icon as NavIcon;
             const NavLink = (
               <Link
                 key={item.name}
@@ -233,11 +217,7 @@ export function Sidebar({
                 )}
                 style={getNavStyle(item.href, isActive)}
               >
-                <MaterialIcon
-                  name={item.icon}
-                  className="h-5 w-5 flex-shrink-0"
-                  style={getIconStyle(item.href, isActive)}
-                />
+                <Icon className="h-5 w-5 flex-shrink-0" style={getIconStyle(item.href, isActive)} />
                 {!collapsed && (
                   <span className="text-sm font-medium">{item.name}</span>
                 )}
@@ -314,9 +294,9 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
               className={cn(
                 "gap-1.5 text-xs touch-expand",
                 demoMode
-                  ? "text-amber-600 dark:text-amber-400"
+                  ? "text-warning"
                   : backendConnected
-                    ? "text-green-600 dark:text-green-400"
+                    ? "text-success"
                     : "text-muted-foreground",
               )}
             >
