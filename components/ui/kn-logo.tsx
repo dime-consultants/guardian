@@ -20,7 +20,7 @@ export function KNLogo({ className, showText = true, size = "md" }: KNLogoProps)
     <div className={cn("flex items-center gap-2", className)}>
       <div
         className={cn(
-          "flex items-center justify-center rounded-full border border-[rgb(2,3,129)]/15 bg-background shadow-sm",
+          "flex items-center justify-center rounded-full border border-primary/15 bg-background shadow-sm",
           sizeMap[size],
         )}
       >
@@ -50,7 +50,7 @@ export function KNLogo({ className, showText = true, size = "md" }: KNLogoProps)
 export function KNLogoFull({ className }: { className?: string }) {
   return (
     <div className={cn("flex items-center gap-3", className)}>
-      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-[rgb(2,3,129)]/15 bg-background shadow-sm">
+      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-primary/15 bg-background shadow-sm">
         <Image
           src="/Screenshot_2026-08-04_at_10.38.00-removebg-preview.png"
           alt="Guardian Bank logo"

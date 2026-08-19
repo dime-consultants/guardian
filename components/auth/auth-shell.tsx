@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import type { ReactNode } from "react";
-import { Github, Landmark } from "lucide-react";
+import { Landmark } from "lucide-react";
 
 import { cn } from "@/lib/utils";
 
@@ -15,27 +15,11 @@ type AuthShellProps = {
   legal?: ReactNode;
 };
 
-type AuthProvider = {
-  label: string;
-  icon: ReactNode;
-};
-
 type VisualChipConfig = {
   text: string;
   position: string;
   muted?: boolean;
 };
-
-const AUTH_PROVIDERS: AuthProvider[] = [
-  {
-    label: "Continue with Google",
-    icon: <GoogleMark />,
-  },
-  {
-    label: "Continue with GitHub",
-    icon: <Github className="size-3.5 text-[#0F172A]" />,
-  },
-];
 
 const AUTH_VISUAL_CHIPS: VisualChipConfig[] = [
   {
@@ -72,7 +56,7 @@ export function AuthShell({
   legal,
 }: AuthShellProps) {
   return (
-    <main className="grid min-h-screen overflow-y-auto overflow-x-hidden bg-[#F8F9FB] text-foreground lg:grid-cols-[minmax(420px,56%)_minmax(360px,44%)]">
+    <main className="grid min-h-screen overflow-y-auto overflow-x-hidden bg-background text-foreground lg:grid-cols-[minmax(420px,56%)_minmax(360px,44%)]">
       <section className="relative flex min-h-screen px-6 py-7 sm:px-10 lg:px-14">
         <AuthBrand />
 
@@ -95,7 +79,7 @@ function AuthBrand() {
   return (
     <Link
       href="/auth/login"
-      className="absolute left-6 top-7 flex items-center gap-2.5 text-[17px] font-semibold tracking-normal text-[#0F172A] sm:left-10 lg:left-14"
+      className="absolute left-6 top-7 flex items-center gap-2.5 text-[17px] font-semibold tracking-normal text-foreground sm:left-10 lg:left-14"
     >
       <Image
         src="/Screenshot_2026-08-04_at_10.38.00-removebg-preview.png"
@@ -113,25 +97,25 @@ function AuthBrand() {
 function AuthHeader({ title, subtitle }: Pick<AuthShellProps, "title" | "subtitle">) {
   return (
     <header className="mb-7 text-center">
-      <h1 className="text-[21px] font-semibold leading-tight tracking-normal text-[#0F172A]">
+      <h1 className="text-[21px] font-semibold leading-tight tracking-normal text-foreground">
         {title}
       </h1>
-      <p className="mt-4 text-[13px] leading-5 text-[#64748B]">{subtitle}</p>
+      <p className="mt-4 text-[13px] leading-5 text-muted-foreground">{subtitle}</p>
     </header>
   );
 }
 
 function AuthLegal({ children }: { children?: ReactNode }) {
   return (
-    <p className="mt-auto pt-10 text-center text-[12px] leading-5 text-[#64748B]">
+    <p className="mt-auto pt-10 text-center text-[12px] leading-5 text-muted-foreground">
       {children ?? (
         <>
           By continuing, you agree to Guardian Financial Tool's{" "}
-          <Link href="#" className="font-semibold text-[#0F172A]">
+          <Link href="#" className="font-semibold text-foreground">
             Terms of Service
           </Link>{" "}
           and{" "}
-          <Link href="#" className="font-semibold text-[#0F172A]">
+          <Link href="#" className="font-semibold text-foreground">
             Privacy Policy
           </Link>
         </>
@@ -140,55 +124,10 @@ function AuthLegal({ children }: { children?: ReactNode }) {
   );
 }
 
-export function AuthDivider() {
-  return (
-    <div className="my-5 flex items-center gap-3 text-[11px] uppercase text-[#94A3B8]">
-      <span className="h-px flex-1 bg-[#E2E8F0]" />
-      <span>OR</span>
-      <span className="h-px flex-1 bg-[#E2E8F0]" />
-    </div>
-  );
-}
-
-export function ProviderButtons() {
-  return (
-    <div className="space-y-2">
-      {AUTH_PROVIDERS.map((provider) => (
-        <ProviderButton
-          key={provider.label}
-          label={provider.label}
-          icon={provider.icon}
-        />
-      ))}
-    </div>
-  );
-}
-
-function ProviderButton({ label, icon }: { label: string; icon: ReactNode }) {
-  return (
-    <button
-      type="button"
-      disabled
-      className="flex h-10 w-full items-center justify-center gap-2 rounded-md border border-[#E2E8F0] bg-white text-[13px] font-medium text-[#0F172A] shadow-[0_1px_2px_rgba(15,23,42,0.04)] transition disabled:cursor-not-allowed disabled:opacity-100"
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}
-
-function GoogleMark() {
-  return (
-    <span className="text-[16px] font-semibold leading-none text-[#4285F4]">
-      G
-    </span>
-  );
-}
-
 function AuthVisual() {
   return (
     <aside
-      className="auth-visual relative hidden min-h-screen overflow-hidden border-l border-[#E2E8F0]/70 bg-[#FBFCFE] lg:block"
+      className="auth-visual relative hidden min-h-screen overflow-hidden border-l border-border bg-card lg:block"
       aria-hidden="true"
     >
       <div className="auth-grid-plane" />
@@ -198,8 +137,8 @@ function AuthVisual() {
         <VisualChip key={chip.text} {...chip} />
       ))}
 
-      <div className="absolute bottom-[19%] left-[56%] flex size-12 -translate-x-1/2 items-center justify-center rounded-full border border-[#D9E1EC] bg-white/70 shadow-[0_14px_26px_rgba(13,59,142,0.12)]">
-        <span className="flex size-7 items-center justify-center rounded-[7px] bg-[#0D3B8E] text-[13px] font-semibold text-white shadow-[0_0_0_7px_rgba(13,59,142,0.08)]">
+      <div className="absolute bottom-[19%] left-[56%] flex size-12 -translate-x-1/2 items-center justify-center rounded-full border border-border bg-card/70 shadow-[var(--shadow-soft)]">
+        <span className="flex size-7 items-center justify-center rounded-[7px] bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm">
           G
         </span>
       </div>
@@ -212,16 +151,16 @@ function AuthVisual() {
 
 function VisualCard() {
   return (
-    <div className="absolute left-[46%] top-[17%] w-[205px] rounded-md border border-[#E2E8F0]/80 bg-white/82 p-3 shadow-[0_18px_38px_rgba(15,23,42,0.08)] backdrop-blur-sm">
+    <div className="absolute left-[46%] top-[17%] w-[205px] rounded-md border border-border bg-card/82 p-3 shadow-[var(--shadow-soft)] backdrop-blur-sm">
       <div className="flex items-center gap-2">
-        <Landmark className="size-3.5 text-[#0D3B8E]" />
-        <div className="h-1.5 w-20 rounded-full bg-[#DDE5F0]" />
+        <Landmark className="size-3.5 text-primary" />
+        <div className="h-1.5 w-20 rounded-full bg-muted" />
       </div>
       <div className="mt-3 space-y-1.5">
-        <div className="h-2 w-full rounded-full bg-[#EEF2F7]" />
-        <div className="h-2 w-2/3 rounded-full bg-[#EEF2F7]" />
+        <div className="h-2 w-full rounded-full bg-muted" />
+        <div className="h-2 w-2/3 rounded-full bg-muted" />
       </div>
-      <div className="mt-3 h-2.5 w-20 rounded-full bg-[#0D3B8E]" />
+      <div className="mt-3 h-2.5 w-20 rounded-full bg-primary" />
     </div>
   );
 }
@@ -234,8 +173,8 @@ function VisualChip({
   return (
     <div
       className={cn(
-        "absolute rounded-full border border-[#E2E8F0]/80 bg-white/82 px-4 py-2 font-mono text-[11px] shadow-[0_10px_24px_rgba(15,23,42,0.05)] backdrop-blur-sm",
-        muted ? "text-[#94A3B8]" : "text-[#0F172A]",
+        "absolute rounded-full border border-border bg-card/82 px-4 py-2 font-mono text-[11px] shadow-sm backdrop-blur-sm",
+        muted ? "text-muted-foreground" : "text-foreground",
         position,
       )}
     >

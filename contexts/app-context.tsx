@@ -171,12 +171,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // If 401 and we haven't retried yet, try to refresh token
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 401 detected, attempting token refresh...");
+<<<<<<<<< Temporary merge branch 1
+      const refreshedToken = await refreshToken();
+      if (refreshedToken) {
+        // Retry with the token returned by refresh, not the stale state value.
+        const retryOptions = { ...options, _retry: true };
+        const retryHeaders = { ...headers };
+        retryHeaders.Authorization = `Bearer ${refreshedToken}`;
+=========
       const refreshed = await refreshToken();
-      if (refreshed && accessToken) {
+      if (refreshed && accessTokenRef.current) {
         // Retry with new token
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessToken}`;
+        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+>>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -224,11 +233,19 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 Auth 401, refreshing token...");
-      const refreshed = await refreshToken();
-      if (refreshed && accessToken) {
+<<<<<<<<< Temporary merge branch 1
+      const refreshedToken = await refreshToken();
+      if (refreshedToken) {
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessToken}`;
+        retryHeaders.Authorization = `Bearer ${refreshedToken}`;
+=========
+      const refreshed = await refreshToken();
+      if (refreshed && accessTokenRef.current) {
+        const retryOptions = { ...options, _retry: true };
+        const retryHeaders = { ...headers };
+        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+>>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -422,6 +439,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUserState(null);
       setAccessToken(null);
       setIsAuthenticated(false);
+      setDemoMode(false);
+      localStorage.setItem("kn-demo-mode", "false");
     }
   };
 
@@ -507,7 +526,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           signal: AbortSignal.timeout(5000),
         });
-        setBackendConnected(response.ok);
+        const health = await response.json().catch(() => null);
+        setBackendConnected(
+          response.ok &&
+            health?.status !== "degraded" &&
+            health?.database !== "error",
+        );
       } catch {
         setBackendConnected(false);
       }
@@ -520,10 +544,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0D3B8E]/20 border-t-[#0D3B8E]" />
-          <p className="text-sm text-[#6B7280]">Loading Guardian...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/15 border-t-primary" />
+          <p className="text-sm text-muted-foreground">Loading Guardian...</p>
         </div>
       </div>
     );
