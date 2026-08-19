@@ -56,6 +56,7 @@ export default function RootLayout({
             {children}
             <Toaster />
           </AppProvider>
+          <Toaster />
         </ThemeProvider>
         {process.env.NODE_ENV === 'production' && <Analytics />}
       </body>
