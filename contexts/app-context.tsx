@@ -12,6 +12,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useRef,
   type ReactNode,
 } from "react";
 
@@ -58,10 +59,15 @@ interface AppContextType {
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
   updateUserProfile: (patch: ProfileUpdatePayload) => Promise<User>;
-   apiFetch: (
-     path: string,
-     options?: { method?: string; body?: any; _retry?: boolean; signal?: AbortSignal },
-   ) => Promise<Response>;
+  apiFetch: (
+    path: string,
+    options?: {
+      method?: string;
+      body?: any;
+      _retry?: boolean;
+      signal?: AbortSignal;
+    },
+  ) => Promise<Response>;
   demoMode: boolean;
   setDemoMode: (value: boolean) => void;
   backendConnected: boolean;
@@ -75,7 +81,15 @@ const AppContext = createContext<AppContextType | undefined>(undefined);
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
   const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [accessToken, setAccessToken] = useState<string | null>(null);
+  const [accessToken, setAccessTokenState] = useState<string | null>(null);
+  // Mirrors accessToken so functions that set a new token and immediately
+  // need it (e.g. login() fetching the profile right after) don't read the
+  // stale value still captured in their own closure before React re-renders.
+  const accessTokenRef = useRef<string | null>(null);
+  const setAccessToken = (token: string | null) => {
+    accessTokenRef.current = token;
+    setAccessTokenState(token);
+  };
   const [demoMode, setDemoMode] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
   const [backendUrl, setBackendUrl] = useState(
@@ -133,8 +147,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
     const headers: Record<string, string> = {};
 
     // Add Bearer token if available
-    if (accessToken) {
-      headers.Authorization = `Bearer ${accessToken}`;
+    if (accessTokenRef.current) {
+      headers.Authorization = `Bearer ${accessTokenRef.current}`;
     }
 
     // Set Content-Type for non-FormData requests
@@ -155,14 +169,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
     });
 
     // If 401 and we haven't retried yet, try to refresh token
-    if (response.status === 401 && accessToken && !options._retry) {
+    if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 401 detected, attempting token refresh...");
+<<<<<<<<< Temporary merge branch 1
       const refreshedToken = await refreshToken();
       if (refreshedToken) {
         // Retry with the token returned by refresh, not the stale state value.
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
         retryHeaders.Authorization = `Bearer ${refreshedToken}`;
+=========
+      const refreshed = await refreshToken();
+      if (refreshed && accessTokenRef.current) {
+        // Retry with new token
+        const retryOptions = { ...options, _retry: true };
+        const retryHeaders = { ...headers };
+        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+>>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -196,7 +219,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       "Content-Type": "application/json",
     };
 
-    const tokenToUse = options.token || accessToken;
+    const tokenToUse = options.token || accessTokenRef.current;
     if (tokenToUse) {
       headers.Authorization = `Bearer ${tokenToUse}`;
     }
@@ -208,13 +231,21 @@ export function AppProvider({ children }: { children: ReactNode }) {
       body: options.body ? JSON.stringify(options.body) : undefined,
     });
 
-    if (response.status === 401 && accessToken && !options._retry) {
+    if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 Auth 401, refreshing token...");
+<<<<<<<<< Temporary merge branch 1
       const refreshedToken = await refreshToken();
       if (refreshedToken) {
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
         retryHeaders.Authorization = `Bearer ${refreshedToken}`;
+=========
+      const refreshed = await refreshToken();
+      if (refreshed && accessTokenRef.current) {
+        const retryOptions = { ...options, _retry: true };
+        const retryHeaders = { ...headers };
+        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+>>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -346,7 +377,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log("✅ Login successful");
 
       let loginToken =
-        data.access ?? data.access_token ?? data.token ?? data.tokens?.access ?? null;
+        data.access ??
+        data.access_token ??
+        data.token ??
+        data.tokens?.access ??
+        null;
 
       // Some backend versions return only the refresh cookie from login. Exchange
       // it immediately so the first login has an access token as well.
