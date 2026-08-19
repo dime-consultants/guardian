@@ -6,15 +6,16 @@ services:
     image: ${IMAGE_TAG}
 
     ports:
-      - ${API_PORT}:3000
+      - "${API_PORT}:3000"
 
     environment:
-      - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3000
+      NODE_ENV: ${NODE_ENV:-production}
+      PORT: "3000"
 
     networks:
-      - prod-network
+      - guardian-network
 
 networks:
-  prod-network:
+  guardian-network:
+    name: ${SHARED_ENV}_guardian_network
     driver: bridge
