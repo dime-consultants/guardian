@@ -6,11 +6,11 @@ services:
     image: ${IMAGE_TAG}
 
     ports:
-      - ${API_PORT}:3005
+      - ${API_PORT}:3000
 
     environment:
       - NODE_ENV=${NODE_ENV:-production}
-      - PORT=3005
+      - PORT=3000
 
     networks:
       - prod-network

@@ -32,7 +32,7 @@ COPY --from=builder /app/package.json ./package.json
 RUN addgroup -g 1001 -S nodejs && \
     adduser -S nextjs -u 1001
 USER nextjs
-EXPOSE 3000
+EXPOSE 3005
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
-    CMD wget --no-verbose --tries=1 --spider http://localhost:3000/health || exit 1
+    CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3005}/health || exit 1
 CMD ["yarn", "start"]
