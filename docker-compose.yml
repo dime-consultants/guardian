@@ -1,52 +1,20 @@
-services:
-  guardian-app:
-    build:
-      context: .
-      dockerfile: Dockerfile
-      args:
-        - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-        - NEXT_PUBLIC_ALLOWED_HOSTS=${NEXT_PUBLIC_ALLOWED_HOSTS}
-        - NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=${NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS:-false}
-        - NEXT_PUBLIC_DEFAULT_DEMO_MODE=${NEXT_PUBLIC_DEFAULT_DEMO_MODE:-false}
-    container_name: guardian-app
-    ports:
-      - "3001:3001"
-    environment:
-      - NEXT_PUBLIC_BACKEND_URL=${NEXT_PUBLIC_BACKEND_URL}
-      - NEXT_PUBLIC_ALLOWED_HOSTS=${NEXT_PUBLIC_ALLOWED_HOSTS}
-      - NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=${NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS:-false}
-      - NEXT_PUBLIC_DEFAULT_DEMO_MODE=${NEXT_PUBLIC_DEFAULT_DEMO_MODE:-false}
-      - XAI_API_KEY=${XAI_API_KEY}
-    restart: unless-stopped
-    networks:
-      - guardian-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
-      start_period: 5s
+version: "3"
 
-  nginx:
-    image: nginx:alpine
-    container_name: guardian-nginx
+services:
+  guardian-ui:
+    container_name: guardian_ui
+    image: ${IMAGE_TAG}
+
     ports:
-      - "9080:80"
-      - "7443:443"
-    volumes:
-      - ./nginx/guardian.conf:/etc/nginx/conf.d/default.conf:ro
-      - /etc/letsencrypt:/etc/letsencrypt:ro
-    depends_on:
-      - guardian-app
-    restart: unless-stopped
+      - ${API_PORT}:3005
+
+    environment:
+      - NODE_ENV=${NODE_ENV}
+      - PORT=3000
+
     networks:
-      - guardian-network
-    healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:3001/health"]
-      interval: 30s
-      timeout: 3s
-      retries: 3
+      - prod-network
 
 networks:
-  guardian-network:
+  prod-network:
     driver: bridge

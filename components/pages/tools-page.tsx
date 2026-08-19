@@ -106,7 +106,7 @@ const demoTools: ToolCard[] = [
     id: "reconciliation",
     apiName: "reconciliation",
     name: "Invoice Reconciliation",
-    description: "Compare invoices against ACON and KRA records.",
+    description: "Compare invoices against BRNET and KRA records.",
     category: "Analysis",
     status: "ready",
     lastRun: "30 minutes ago",
@@ -139,11 +139,11 @@ const categoryIcons: Record<string, LucideIcon> = {
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
-      <div className="p-4 rounded-full bg-[#EEF2F7] mb-4">
-        <Server className="h-10 w-10 text-[#6B7280]" />
+      <div className="p-4 rounded-full bg-muted mb-4">
+        <Server className="h-10 w-10 text-muted-foreground" />
       </div>
-      <h3 className="text-xl font-semibold text-[#2B2B2B] mb-2">Awaiting Backend Connection</h3>
-      <p className="text-[#6B7280] text-center max-w-md mb-6">
+      <h3 className="text-xl font-semibold text-foreground mb-2">Awaiting Backend Connection</h3>
+      <p className="text-muted-foreground text-center max-w-md mb-6">
         Connect to your Django backend to use the tools page, or enable Demo Mode to preview sample data.
       </p>
       <Link href="/settings">
@@ -492,18 +492,18 @@ export function ToolsPage() {
     <div className="space-y-6 pb-2">
       <div className="flex flex-col sm:flex-row sm:items-start gap-2 sm:gap-3">
         <div className="flex-1 min-w-0">
-          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-[#2B2B2B] flex items-center gap-2 md:gap-3">
-            <Wrench className="h-6 md:h-7 w-6 md:w-7 text-[#0D3B8E] flex-shrink-0" />
+          <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground flex items-center gap-2 md:gap-3">
+            <Wrench className="h-6 md:h-7 w-6 md:w-7 text-primary flex-shrink-0" />
             Data Tools
           </h2>
-          <p className="text-[#6B7280] mt-1 text-sm line-clamp-2">
+          <p className="text-muted-foreground mt-1 text-sm line-clamp-2">
             Fetch and display available backend tools for data processing.
           </p>
         </div>
         <div className="flex items-center gap-2 sm:flex-shrink-0">
           {demoMode && <Badge variant="secondary" className="bg-amber-100 text-amber-800 dark:bg-amber-900/50 dark:text-amber-300">Demo Data</Badge>}
           {!demoMode && actualConnected && <Badge variant="secondary" className="bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300">Connected</Badge>}
-          {!demoMode && !actualConnected && <Badge variant="secondary" className="bg-[#EEF2F7] text-[#6B7280]">No Data Source</Badge>}
+          {!demoMode && !actualConnected && <Badge variant="secondary" className="bg-muted text-muted-foreground">No Data Source</Badge>}
         </div>
       </div>
 
@@ -529,36 +529,36 @@ export function ToolsPage() {
       </div>
 
       {showEmptyState ? (
-        <Card className="border-[#E5E7EB] bg-white">
+        <Card className="border-border bg-card">
           <AwaitingBackendState />
         </Card>
       ) : (
         <>
           {isLoading ? (
-            <Card className="border-[#E5E7EB] bg-white p-8">
+            <Card className="border-border bg-card p-8">
               <div className="flex flex-col items-center justify-center gap-4 text-center">
-                <Loader2 className="h-8 w-8 animate-spin text-[#0D3B8E]" />
+                <Loader2 className="h-8 w-8 animate-spin text-primary" />
                 <div>
-                  <h3 className="text-lg font-semibold text-[#2B2B2B]">Loading tools...</h3>
-                  <p className="text-sm text-[#6B7280]">Fetching available tools from the backend.</p>
+                  <h3 className="text-lg font-semibold text-foreground">Loading tools...</h3>
+                  <p className="text-sm text-muted-foreground">Fetching available tools from the backend.</p>
                 </div>
               </div>
             </Card>
           ) : error ? (
-            <Card className="border-[#E5E7EB] bg-white p-8">
+            <Card className="border-border bg-card p-8">
               <div className="space-y-4 text-center">
-                <h3 className="text-lg font-semibold text-[#2B2B2B]">Unable to load tools</h3>
-                <p className="text-sm text-[#6B7280]">{error}</p>
+                <h3 className="text-lg font-semibold text-foreground">Unable to load tools</h3>
+                <p className="text-sm text-muted-foreground">{error}</p>
                 <Link href="/settings">
                   <Button variant="outline">Check backend configuration</Button>
                 </Link>
               </div>
             </Card>
           ) : tools.length === 0 ? (
-            <Card className="border-[#E5E7EB] bg-white p-8">
+            <Card className="border-border bg-card p-8">
               <div className="space-y-3 text-center">
-                <h3 className="text-lg font-semibold text-[#2B2B2B]">No tools available</h3>
-                <p className="text-sm text-[#6B7280]">
+                <h3 className="text-lg font-semibold text-foreground">No tools available</h3>
+                <p className="text-sm text-muted-foreground">
                   Your backend is connected, but no enabled tools were returned.
                 </p>
               </div>
@@ -569,20 +569,20 @@ export function ToolsPage() {
                 <Card
                   key={tool.id}
                   className={cn(
-                    "border-[#E5E7EB] bg-white cursor-pointer transition-all hover:border-primary/50 hover:shadow-md p-3 gap-2",
-                    selectedTool === String(tool.id) ? "border-primary ring-1 ring-[#0D3B8E]" : ""
+                    "border-border bg-card cursor-pointer transition-all hover:border-primary/50 hover:shadow-md p-3 gap-2",
+                    selectedTool === String(tool.id) ? "border-primary ring-1 ring-primary" : ""
                   )}
                   onClick={() => setSelectedTool(String(tool.id))}
                 >
                   <CardHeader className="p-0">
                     <div className="flex items-start justify-between gap-2">
                       <div className="flex items-center gap-2">
-                        <div className="p-2 rounded-lg bg-[#0D3B8E]/10 flex-shrink-0">
-                          <tool.icon className="h-4 w-4 text-[#0D3B8E]" />
+                        <div className="p-2 rounded-lg bg-primary/10 flex-shrink-0">
+                          <tool.icon className="h-4 w-4 text-primary" />
                         </div>
                         <div>
-                          <CardTitle className="text-sm text-[#2B2B2B] leading-snug">{tool.name}</CardTitle>
-                          <div className="text-xs text-[#6B7280]">{tool.category}</div>
+                          <CardTitle className="text-sm text-foreground leading-snug">{tool.name}</CardTitle>
+                          <div className="text-xs text-muted-foreground">{tool.category}</div>
                         </div>
                       </div>
                       <Badge variant="secondary" className="text-xs flex-shrink-0">
@@ -591,9 +591,9 @@ export function ToolsPage() {
                     </div>
                   </CardHeader>
                   <CardContent className="p-0">
-                    <p className="text-xs text-[#6B7280] mb-2 line-clamp-2">{tool.description}</p>
+                    <p className="text-xs text-muted-foreground mb-2 line-clamp-2">{tool.description}</p>
                     <div className="flex items-center justify-between gap-2">
-                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-[#6B7280]">
+                      <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
                         <div className="flex items-center gap-1">
                           <Clock className="h-3 w-3 flex-shrink-0" />
                           <span>{tool.lastRun}</span>
@@ -633,8 +633,8 @@ export function ToolsPage() {
         <div>
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h3 className="text-xl font-semibold text-[#2B2B2B]">My Custom Tools</h3>
-              <p className="text-sm text-[#6B7280]">Webhook or LLM-prompt tools you've defined yourself.</p>
+              <h3 className="text-xl font-semibold text-foreground">My Custom Tools</h3>
+              <p className="text-sm text-muted-foreground">Webhook or LLM-prompt tools you've defined yourself.</p>
             </div>
             <Button size="sm" onClick={() => { setEditingTool(null); setBuilderOpen(true); }}>
               <Plus className="h-4 w-4 mr-1.5" />
@@ -643,20 +643,20 @@ export function ToolsPage() {
           </div>
 
           {isLoadingCustom ? (
-            <Card className="border-[#E5E7EB] bg-white p-8">
-              <div className="flex items-center justify-center gap-3 text-[#6B7280]">
+            <Card className="border-border bg-card p-8">
+              <div className="flex items-center justify-center gap-3 text-muted-foreground">
                 <Loader2 className="h-5 w-5 animate-spin" />
                 Loading custom tools...
               </div>
             </Card>
           ) : customToolsError ? (
-            <Card className="border-[#E5E7EB] bg-white p-6">
-              <p className="text-sm text-[#6B7280]">{customToolsError}</p>
+            <Card className="border-border bg-card p-6">
+              <p className="text-sm text-muted-foreground">{customToolsError}</p>
             </Card>
           ) : customTools.length === 0 ? (
-            <Card className="border-[#E5E7EB] bg-white p-8">
+            <Card className="border-border bg-card p-8">
               <div className="space-y-3 text-center">
-                <h4 className="text-sm font-semibold text-[#2B2B2B]">You haven't created any custom tools yet</h4>
+                <h4 className="text-sm font-semibold text-foreground">You haven't created any custom tools yet</h4>
                 <Button size="sm" variant="outline" onClick={() => { setEditingTool(null); setBuilderOpen(true); }}>
                   <Plus className="h-4 w-4 mr-1.5" />
                   New Tool
@@ -666,21 +666,21 @@ export function ToolsPage() {
           ) : (
             <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
               {customTools.map((tool) => (
-                <Card key={tool.id} className="border-[#E5E7EB] bg-white p-3 gap-2">
+                <Card key={tool.id} className="border-border bg-card p-3 gap-2">
                   <CardHeader className="p-0">
                     <div className="flex items-start justify-between gap-2">
                       <div>
-                        <CardTitle className="text-sm text-[#2B2B2B] leading-snug">{tool.display_name}</CardTitle>
-                        <div className="text-xs text-[#6B7280]">{tool.category_display} &middot; {tool.tool_type_display}</div>
+                        <CardTitle className="text-sm text-foreground leading-snug">{tool.display_name}</CardTitle>
+                        <div className="text-xs text-muted-foreground">{tool.category_display} &middot; {tool.tool_type_display}</div>
                       </div>
                       <div className="flex flex-col items-end gap-1 flex-shrink-0">
                         <Badge variant="secondary" className="text-xs">{tool.enabled ? "enabled" : "disabled"}</Badge>
-                        {!tool.is_safe && <Badge variant="outline" className="text-[10px] text-[#6B7280]">Unsafe</Badge>}
+                        {!tool.is_safe && <Badge variant="outline" className="text-[10px] text-muted-foreground">Unsafe</Badge>}
                       </div>
                     </div>
                   </CardHeader>
                   <CardContent className="p-0 space-y-3">
-                    <p className="text-xs text-[#6B7280] line-clamp-2">{tool.description}</p>
+                    <p className="text-xs text-muted-foreground line-clamp-2">{tool.description}</p>
                     <div className="flex items-center gap-1.5">
                       <Button size="sm" variant="outline" className="h-7 text-xs px-2" onClick={() => openTestDialog(tool)}>
                         <FlaskConical className="h-3 w-3 mr-1" />
@@ -728,7 +728,7 @@ export function ToolsPage() {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <runDialogTool.icon className="h-4 w-4 text-[#0D3B8E]" />
+                    <runDialogTool.icon className="h-4 w-4 text-primary" />
                     Run {runDialogTool.name}
                   </DialogTitle>
                   <DialogDescription>{runDialogTool.description}</DialogDescription>
@@ -788,7 +788,7 @@ export function ToolsPage() {
               <>
                 <DialogHeader>
                   <DialogTitle className="flex items-center gap-2">
-                    <FlaskConical className="h-4 w-4 text-[#0D3B8E]" />
+                    <FlaskConical className="h-4 w-4 text-primary" />
                     Test {testDialogTool.display_name}
                   </DialogTitle>
                   <DialogDescription>{testDialogTool.description}</DialogDescription>

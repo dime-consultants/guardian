@@ -59,10 +59,15 @@ interface AppContextType {
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
   updateUserProfile: (patch: ProfileUpdatePayload) => Promise<User>;
-   apiFetch: (
-     path: string,
-     options?: { method?: string; body?: any; _retry?: boolean; signal?: AbortSignal },
-   ) => Promise<Response>;
+  apiFetch: (
+    path: string,
+    options?: {
+      method?: string;
+      body?: any;
+      _retry?: boolean;
+      signal?: AbortSignal;
+    },
+  ) => Promise<Response>;
   demoMode: boolean;
   setDemoMode: (value: boolean) => void;
   backendConnected: boolean;
@@ -93,11 +98,18 @@ export function AppProvider({ children }: { children: ReactNode }) {
   );
   const [isInitializing, setIsInitializing] = useState(true);
 
-  // Helper: Refresh token function
-  const refreshToken = async (): Promise<boolean> => {
+  // Keep browser requests same-origin so preview and production do not depend on
+  // the backend allowing every deployment origin through CORS.
+  const apiUrl = (path: string) =>
+    typeof window === "undefined"
+      ? `${backendUrl}/api/${path}`
+      : `/api/backend/${path}`;
+
+  // Return the token as well as storing it so callers can use it before React re-renders.
+  const refreshToken = async (): Promise<string | null> => {
     try {
       console.log("🔄 Refreshing token...");
-      const response = await fetch(`${backendUrl}/api/auth/refresh/`, {
+      const response = await fetch(apiUrl("auth/refresh/"), {
         method: "POST",
         credentials: "include",
         headers: {
@@ -110,14 +122,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (data.token) {
           console.log("✅ Token refreshed successfully");
           setAccessToken(data.token);
-          return true;
+          return data.token;
         }
       }
       console.log("❌ Token refresh failed");
-      return false;
+      return null;
     } catch (error) {
       console.error("Token refresh error:", error);
-      return false;
+      return null;
     }
   };
 
@@ -131,7 +143,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       signal?: AbortSignal;
     } = {},
   ) => {
-    const url = `${backendUrl}/api/${path}`;
+    const url = apiUrl(path);
     const headers: Record<string, string> = {};
 
     // Add Bearer token if available
@@ -160,11 +172,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 401 detected, attempting token refresh...");
       const refreshed = await refreshToken();
-      if (refreshed && accessTokenRef.current) {
+      if (refreshed && accessToken) {
         // Retry with new token
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+        retryHeaders.Authorization = `Bearer ${accessToken}`;
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -193,7 +205,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
       _retry?: boolean;
     } = {},
   ) => {
-    const url = `${backendUrl}/api/auth/${path}`;
+    const url = apiUrl(`auth/${path}`);
     const headers: Record<string, string> = {
       "Content-Type": "application/json",
     };
@@ -213,10 +225,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 Auth 401, refreshing token...");
       const refreshed = await refreshToken();
-      if (refreshed && accessTokenRef.current) {
+      if (refreshed && accessToken) {
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
+        retryHeaders.Authorization = `Bearer ${accessToken}`;
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -232,11 +244,23 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
 
   // Fetch user profile
-  const fetchUserProfile = async (signal?: AbortSignal) => {
+  const fetchUserProfile = async (
+    signal?: AbortSignal,
+    tokenOverride?: string | null,
+  ) => {
     if (demoMode) return;
 
     try {
-      const response = await apiFetch("auth/me/", { signal });
+      const response = tokenOverride
+        ? await fetch(apiUrl("auth/me/"), {
+            credentials: "include",
+            headers: {
+              Authorization: `Bearer ${tokenOverride}`,
+              "Content-Type": "application/json",
+            },
+            signal,
+          })
+        : await apiFetch("auth/me/", { signal });
 
       if (response.ok) {
         const data = await response.json();
@@ -299,7 +323,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
     try {
       console.log("🔐 Login attempt for:", email);
 
-      const response = await fetch(`${backendUrl}/api/auth/login/`, {
+      const response = await fetch(apiUrl("auth/login/"), {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -311,22 +335,43 @@ export function AppProvider({ children }: { children: ReactNode }) {
       console.log("📊 Response status:", response.status);
 
       if (!response.ok) {
-        let errorMessage = "Login failed";
+        const responseText = await response.text();
+        let errorMessage = `Login failed (${response.status})`;
+
         try {
-          const errorData = await response.json();
+          const errorData = JSON.parse(responseText);
+          const payload = errorData.error ?? errorData;
+          const detail = payload.details;
+          const fieldMessage = detail
+            ? Object.values(detail).flat().find(Boolean)
+            : undefined;
           errorMessage =
-            errorData.detail || errorData.message || "Login failed";
-        } catch (e) {
-          console.error("Failed to parse error response");
+            payload.detail || payload.message || fieldMessage || errorMessage;
+        } catch {
+          if (responseText.trim()) {
+            errorMessage = responseText.replace(/<[^>]*>/g, " ").trim();
+          }
         }
-        throw new Error(errorMessage);
+
+        throw new Error(String(errorMessage));
       }
 
       const data = await response.json();
       console.log("✅ Login successful");
 
-      if (data.token) {
-        setAccessToken(data.token);
+      let loginToken =
+        data.access ??
+        data.access_token ??
+        data.token ??
+        data.tokens?.access ??
+        null;
+
+      // Some backend versions return only the refresh cookie from login. Exchange
+      // it immediately so the first login has an access token as well.
+      if (!loginToken) {
+        loginToken = await refreshToken();
+      } else {
+        setAccessToken(loginToken);
       }
 
       if (data.user) {
@@ -334,8 +379,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
         setIsAuthenticated(true);
       }
 
-      // Ensure we have full profile
-      await fetchUserProfile();
+      // Use the token immediately; React state updates are asynchronous.
+      await fetchUserProfile(undefined, loginToken);
     } catch (error) {
       console.error("❌ Login error:", error);
       throw error;
@@ -367,7 +412,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Logout function
   const logout = async () => {
     try {
-      await fetch(`${backendUrl}/api/auth/logout/`, {
+      await fetch(apiUrl("auth/logout/"), {
         method: "POST",
         credentials: "include",
       });
@@ -419,7 +464,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       }
 
       if (!demoMode) {
-        await fetchUserProfile(AbortSignal.timeout(5000));
+        const startupToken = await refreshToken();
+        await fetchUserProfile(AbortSignal.timeout(5000), startupToken);
       }
 
       setIsInitializing(false);
@@ -456,7 +502,7 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     const checkBackend = async () => {
       try {
-        const response = await fetch(`${backendUrl}/api/health/`, {
+        const response = await fetch(apiUrl("health/"), {
           method: "GET",
           credentials: "include",
           signal: AbortSignal.timeout(5000),
