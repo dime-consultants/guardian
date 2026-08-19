@@ -130,12 +130,12 @@ const getFileColor = (file: File) => {
   if (n.match(/\.(xlsx|xls|csv)$/i))
     return "border-green-500/30 bg-green-50 dark:bg-green-950/20";
   if (n.match(/\.pdf$/i))
-    return "border-red-500/30 bg-[#fef2f2] dark:bg-red-950/20";
+    return "border-destructive/30 bg-destructive/10";
   if (n.match(/\.json$/i))
     return "border-yellow-500/30 bg-yellow-50 dark:bg-yellow-950/20";
   if (n.match(/\.txt$/i))
     return "border-blue-500/30 bg-blue-50 dark:bg-blue-950/20";
-  return "border-[#0D3B8E]/20 bg-[#EEF2F7]/30";
+  return "border-primary/20 bg-muted/30";
 };
 
 const formatFileSize = (bytes: number) => {
@@ -188,7 +188,7 @@ const groupConversationsByDate = (convs: Conversation[]) => {
 };
 
 const suggestedPrompts = [
-  "Process today's ACON invoices",
+  "Process today's BRNET invoices",
   "Generate weekly reconciliation report",
   "Analyze telephone billing for May",
   "Find variances above KES 50,000",
@@ -222,7 +222,7 @@ const generateTitleFromContent = (content: string): string => {
     return "Variance Analysis";
   if (c.includes("kra")) return "KRA Analysis";
   if (c.includes("ura")) return "URA Analysis";
-  if (c.includes("acon")) return "ACON Analysis";
+  if (c.includes("brnet")) return "BRNET Analysis";
 
   // Clean up the title from JSON strings
   let cleanContent = content;
@@ -1436,8 +1436,8 @@ export function ChatPage() {
         className={cn(
           "w-full text-left p-2.5 rounded-lg transition-all duration-200 cursor-pointer",
           conversationId === conv.id
-            ? "bg-[#0D3B8E] text-white shadow-md"
-            : "hover:bg-white/80 text-[#2B2B2B] border border-transparent hover:border-[#0D3B8E]/20",
+            ? "bg-primary text-primary-foreground shadow-md"
+            : "hover:bg-card/80 text-foreground border border-transparent hover:border-primary/20",
         )}
       >
         <div className="flex items-start justify-between gap-2">
@@ -1485,7 +1485,7 @@ export function ChatPage() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  className="h-6 w-6 p-0 hover:bg-[#0D3B8E]/20 rounded-full"
+                  className="h-6 w-6 p-0 hover:bg-primary/20 rounded-full"
                 >
                   <MoreVertical className="h-3 w-3" />
                 </Button>
@@ -1508,7 +1508,7 @@ export function ChatPage() {
                 )}
                 <DropdownMenuItem
                   onClick={() => handleDeleteClick(conv)}
-                  className="text-[#ba1a1a] text-xs cursor-pointer"
+                  className="text-destructive text-xs cursor-pointer"
                 >
                   <Trash2 className="h-3 w-3 mr-2" /> Delete
                 </DropdownMenuItem>
@@ -1525,7 +1525,7 @@ export function ChatPage() {
     <div
       className={cn(
         "h-full flex gap-0 transition-all duration-200",
-        isDragging && "ring-2 ring-[#0D3B8E] ring-inset bg-[#0D3B8E]/5 rounded-lg",
+        isDragging && "ring-2 ring-primary ring-inset bg-primary/5 rounded-lg",
       )}
       onDragEnter={handleDragEnter}
       onDragLeave={handleDragLeave}
@@ -1534,11 +1534,11 @@ export function ChatPage() {
     >
       {/* Drag overlay */}
       {isDragging && (
-        <div className="fixed inset-0 bg-[#0D3B8E]/10 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
-          <div className="bg-white rounded-2xl shadow-2xl p-8 text-center border-2 border-primary border-dashed">
-            <Upload className="h-16 w-16 text-[#0D3B8E] mx-auto mb-4 animate-bounce" />
+        <div className="fixed inset-0 bg-primary/10 backdrop-blur-sm z-50 flex items-center justify-center pointer-events-none">
+          <div className="bg-card rounded-2xl shadow-2xl p-8 text-center border-2 border-primary border-dashed">
+            <Upload className="h-16 w-16 text-primary mx-auto mb-4 animate-bounce" />
             <h3 className="text-xl font-semibold">Drop files here</h3>
-            <p className="text-[#6B7280] mt-2">
+            <p className="text-muted-foreground mt-2">
               CSV, Excel, PDF, JSON, TXT (max 10 MB)
             </p>
           </div>
@@ -1549,11 +1549,11 @@ export function ChatPage() {
       {(demoMode || backendConnected) && (
         <div
           className={cn(
-            "border-r border-[#E5E7EB]/50 bg-[#EEF2F7]/20 hidden md:flex flex-col transition-all duration-300 shadow-sm",
+            "border-r border-border/50 bg-muted/20 hidden md:flex flex-col transition-all duration-300 shadow-sm",
             sidebarCollapsed ? "w-12" : "w-72",
           )}
         >
-          <div className="p-4 border-b border-[#E5E7EB]/50 flex items-center justify-between">
+          <div className="p-4 border-b border-border/50 flex items-center justify-between">
             {!sidebarCollapsed && (
               <h3 className="font-semibold text-sm tracking-wide">
                 Chat History
@@ -1562,22 +1562,22 @@ export function ChatPage() {
             <Button
               variant="ghost"
               size="sm"
-              className="h-8 w-8 p-0 hover:bg-[#0D3B8E]/10 rounded-full"
+              className="h-8 w-8 p-0 hover:bg-primary/10 rounded-full"
               onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
             >
               {sidebarCollapsed ? (
-                <ChevronRight className="h-4 w-4 text-[#0D3B8E]" />
+                <ChevronRight className="h-4 w-4 text-primary" />
               ) : (
-                <ChevronLeft className="h-4 w-4 text-[#0D3B8E]" />
+                <ChevronLeft className="h-4 w-4 text-primary" />
               )}
             </Button>
           </div>
 
           {!sidebarCollapsed && (
             <>
-              <div className="p-3.5 space-y-3 border-b border-[#E5E7EB]/50">
+              <div className="p-3.5 space-y-3 border-b border-border/50">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-[#6B7280]" />
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                   <Input
                     placeholder="Search conversations..."
                     value={searchQuery}
@@ -1597,15 +1597,15 @@ export function ChatPage() {
                   <Button
                     variant="outline"
                     size="sm"
-                    className="text-xs h-8 text-[#ba1a1a] hover:bg-[#ba1a1a]/10 rounded-lg"
+                    className="text-xs h-8 text-destructive hover:bg-destructive/10 rounded-lg"
                     onClick={() => setClearAllDialogOpen(true)}
                   >
                     <Trash2 className="h-3 w-3 mr-1.5" /> Clear
                   </Button>
                 </div>
                 {showFilters && (
-                  <div className="space-y-2 p-3 rounded-lg bg-white border border-[#0D3B8E]/20 shadow-sm">
-                    <label className="text-xs font-semibold text-[#2B2B2B]/70">
+                  <div className="space-y-2 p-3 rounded-lg bg-card border border-primary/20 shadow-sm">
+                    <label className="text-xs font-semibold text-foreground/70">
                       From Date
                     </label>
                     <Input
@@ -1614,7 +1614,7 @@ export function ChatPage() {
                       onChange={(e) => setDateFrom(e.target.value)}
                       className="h-8 text-sm rounded-lg"
                     />
-                    <label className="text-xs font-semibold text-[#2B2B2B]/70 mt-2 block">
+                    <label className="text-xs font-semibold text-foreground/70 mt-2 block">
                       To Date
                     </label>
                     <Input
@@ -1644,7 +1644,7 @@ export function ChatPage() {
 
               <div className="flex-1 overflow-y-auto px-3 py-3 space-y-2">
                 {isLoadingConversations ? (
-                  <div className="text-center text-sm text-[#6B7280] py-8">
+                  <div className="text-center text-sm text-muted-foreground py-8">
                     <Loader2 className="h-5 w-5 animate-spin inline mb-2" />
                     <p>Loading history...</p>
                   </div>
@@ -1670,7 +1670,7 @@ export function ChatPage() {
                       if (!items.length) return null;
                       return (
                         <div key={key}>
-                          <h4 className="text-xs font-bold text-[#0D3B8E]/60 mb-2 px-2 uppercase tracking-wider">
+                          <h4 className="text-xs font-bold text-primary/60 mb-2 px-2 uppercase tracking-wider">
                             {label[key]}
                           </h4>
                           <div className="space-y-1">
@@ -1681,7 +1681,7 @@ export function ChatPage() {
                     })}
                   </>
                 ) : (
-                  <div className="text-center text-sm text-[#6B7280] py-8">
+                  <div className="text-center text-sm text-muted-foreground py-8">
                     {searchQuery || dateFrom || dateTo ? (
                       <>
                         <Search className="h-8 w-8 mx-auto mb-2 opacity-30" />
@@ -1721,7 +1721,7 @@ export function ChatPage() {
 
       {/* Main chat area */}
       <div className="flex-1 flex flex-col min-w-0">
-        <div className="px-3 md:px-6 py-3 md:py-4 border-b border-[#E5E7EB]/50 flex items-center justify-between flex-shrink-0 flex-wrap gap-2 md:gap-3">
+        <div className="px-3 md:px-6 py-3 md:py-4 border-b border-border/50 flex items-center justify-between flex-shrink-0 flex-wrap gap-2 md:gap-3">
           <div className="min-w-0 flex-1 flex items-center gap-2">
             {/* Mobile history toggle */}
             {(demoMode || backendConnected) && (
@@ -1737,10 +1737,10 @@ export function ChatPage() {
             )}
             <div className="min-w-0">
               <h2 className="text-base md:text-xl font-bold tracking-tight flex items-center gap-2 md:gap-3">
-                <MessageSquare className="h-5 md:h-6 w-5 md:w-6 text-[#0D3B8E] flex-shrink-0" />
+                <MessageSquare className="h-5 md:h-6 w-5 md:w-6 text-primary flex-shrink-0" />
                 <span className="truncate">{conversationTitle}</span>
               </h2>
-              <p className="text-[#6B7280] mt-0.5 md:mt-1 text-xs font-medium">
+              <p className="text-muted-foreground mt-0.5 md:mt-1 text-xs font-medium">
                 {demoMode ? "Demo mode" : "Backend connected"}
                 {conversationId && messages.length > 0
                   ? ` • ${messages.filter((m) => !isWelcomeMessage(m)).length} message${messages.filter((m) => !isWelcomeMessage(m)).length !== 1 ? "s" : ""}${hasMoreMessages ? "+" : ""}`
@@ -1799,17 +1799,17 @@ export function ChatPage() {
           </div>
         </div>
 
-        <Card className="flex-1 flex flex-col border-[#E5E7EB]/50 bg-white overflow-hidden min-h-0 shadow-sm m-2 mt-2 md:m-6 md:mt-4 rounded-xl">
+        <Card className="flex-1 flex flex-col border-border/50 bg-card overflow-hidden min-h-0 shadow-sm m-2 mt-2 md:m-6 md:mt-4 rounded-xl">
           <CardContent className="flex-1 overflow-y-auto p-6 space-y-4 min-h-0">
             {isLoadingMessages ? (
               <div className="flex items-center justify-center h-full">
-                <Loader2 className="h-8 w-8 animate-spin text-[#6B7280]" />
+                <Loader2 className="h-8 w-8 animate-spin text-muted-foreground" />
               </div>
             ) : messages.length === 0 ? (
               <div className="flex items-center justify-center h-full text-center">
                 <div>
                   <MessageSquare className="h-12 w-12 mx-auto mb-4 opacity-30" />
-                  <p className="text-[#6B7280] text-sm">
+                  <p className="text-muted-foreground text-sm">
                     No messages yet. Start a conversation!
                   </p>
                 </div>
@@ -1824,16 +1824,16 @@ export function ChatPage() {
                   )}
                 >
                   {message.role === "assistant" && (
-                    <div className="h-8 w-8 rounded-lg bg-[#0D3B8E]/10 border border-[#0D3B8E]/20 flex items-center justify-center flex-shrink-0">
-                      <Bot className="h-4 w-4 text-[#0D3B8E]" />
+                    <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                      <Bot className="h-4 w-4 text-primary" />
                     </div>
                   )}
                   <div
                     className={cn(
                       "max-w-[85%] md:max-w-[65%] rounded-xl p-3 md:p-3.5 shadow-sm",
                       message.role === "user"
-                        ? "bg-[#0D3B8E] text-white rounded-br-none"
-                        : "bg-white border border-[#E5E7EB]/50 text-[#2B2B2B] rounded-bl-none",
+                        ? "bg-primary text-primary-foreground rounded-br-none"
+                        : "bg-card border border-border/50 text-foreground rounded-bl-none",
                     )}
                   >
                     <div className="text-sm whitespace-pre-wrap leading-relaxed break-words">
@@ -1856,8 +1856,8 @@ export function ChatPage() {
                               className={cn(
                                 "flex items-center gap-2 p-2.5 rounded-lg text-xs border",
                                 message.role === "user"
-                                  ? "bg-[#0D3B8E]/15 border-white/20 text-white"
-                                  : "bg-[#EEF2F7] border-[#E5E7EB]/50",
+                                  ? "bg-primary/15 border-white/20 text-white"
+                                  : "bg-muted border-border/50",
                               )}
                             >
                               <FileIcon className="h-4 w-4 flex-shrink-0 opacity-70" />
@@ -1870,7 +1870,7 @@ export function ChatPage() {
                               <Button
                                 size="sm"
                                 variant="ghost"
-                                className="h-5 w-5 p-0 hover:bg-white/20"
+                                className="h-5 w-5 p-0 hover:bg-card/20"
                                 onClick={() => downloadAttachment(att)}
                               >
                                 <Download className="h-3 w-3" />
@@ -1886,7 +1886,7 @@ export function ChatPage() {
                         "flex items-center gap-2 mt-2 text-xs",
                         message.role === "user"
                           ? "text-white/60 justify-end"
-                          : "text-[#6B7280]",
+                          : "text-muted-foreground",
                       )}
                     >
                       <span>{formatTime(message.created_at)}</span>
@@ -1913,11 +1913,11 @@ export function ChatPage() {
             )}
             {isLoading && (
               <div className="flex gap-3 justify-start animate-in fade-in">
-                <div className="h-8 w-8 rounded-lg bg-[#0D3B8E]/10 border border-[#0D3B8E]/20 flex items-center justify-center flex-shrink-0">
-                  <Bot className="h-4 w-4 text-[#0D3B8E]" />
+                <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
+                  <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="bg-white border border-[#E5E7EB]/50 rounded-xl p-3.5 shadow-sm">
-                  <Loader2 className="h-4 w-4 animate-spin text-[#6B7280]" />
+                <div className="bg-card border border-border/50 rounded-xl p-3.5 shadow-sm">
+                  <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
                 </div>
               </div>
             )}
@@ -1925,8 +1925,8 @@ export function ChatPage() {
           </CardContent>
 
           {messages.length <= 1 && (demoMode || backendConnected) && (
-            <div className="px-4 md:px-6 py-3 md:py-4 border-t border-[#E5E7EB]/50 flex-shrink-0">
-              <p className="text-xs text-[#6B7280] mb-2 font-semibold uppercase tracking-wide">
+            <div className="px-4 md:px-6 py-3 md:py-4 border-t border-border/50 flex-shrink-0">
+              <p className="text-xs text-muted-foreground mb-2 font-semibold uppercase tracking-wide">
                 Suggested Prompts
               </p>
               <div className="grid grid-cols-2 gap-2">
@@ -1935,11 +1935,11 @@ export function ChatPage() {
                     key={p}
                     variant="outline"
                     size="sm"
-                    className="text-xs h-10 rounded-lg hover:bg-[#0D3B8E]/10 justify-start text-left px-2 touch-expand"
+                    className="text-xs h-10 rounded-lg hover:bg-primary/10 justify-start text-left px-2 touch-expand"
                     onClick={() => setInput(p)}
                     disabled={isLoading}
                   >
-                    <Sparkles className="h-3 w-3 mr-1.5 flex-shrink-0 text-[#0D3B8E]" />
+                    <Sparkles className="h-3 w-3 mr-1.5 flex-shrink-0 text-primary" />
                     <span className="truncate">{p}</span>
                   </Button>
                 ))}
@@ -1948,7 +1948,7 @@ export function ChatPage() {
           )}
 
           {pendingFiles.length > 0 && (
-            <div className="px-6 py-3 border-t border-[#E5E7EB]/50 bg-[#EEF2F7]/30 flex-shrink-0">
+            <div className="px-6 py-3 border-t border-border/50 bg-muted/30 flex-shrink-0">
               <p className="text-sm font-semibold mb-2 flex items-center gap-2">
                 <FileCheck className="h-4 w-4 text-green-500" />
                 Ready to Send ({pendingFiles.length} file
@@ -1970,13 +1970,13 @@ export function ChatPage() {
                       <span className="max-w-[200px] truncate font-medium">
                         {file.name}
                       </span>
-                      <span className="text-xs text-[#6B7280]">
+                      <span className="text-xs text-muted-foreground">
                         {formatFileSize(file.size)}
                       </span>
                       <Button
                         size="sm"
                         variant="ghost"
-                        className="h-5 w-5 p-0 hover:bg-[#ba1a1a]/10 rounded-full"
+                        className="h-5 w-5 p-0 hover:bg-destructive/10 rounded-full"
                         onClick={() => removePendingFile(idx)}
                       >
                         <X className="h-3 w-3" />
@@ -1988,7 +1988,7 @@ export function ChatPage() {
             </div>
           )}
 
-          <div className="border-t border-[#E5E7EB]/50 p-3 md:p-6 flex-shrink-0">
+          <div className="border-t border-border/50 p-3 md:p-6 flex-shrink-0">
             <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3">
               <input
                 type="file"
@@ -2002,7 +2002,7 @@ export function ChatPage() {
                 type="button"
                 variant="outline"
                 size="default"
-                className="flex-shrink-0 h-11 px-2 md:px-4 rounded-lg hover:bg-[#0D3B8E]/10 hover:border-primary/50 transition-all"
+                className="flex-shrink-0 h-11 px-2 md:px-4 rounded-lg hover:bg-primary/10 hover:border-primary/50 transition-all"
                 onClick={() => fileInputRef.current?.click()}
                 disabled={isLoading}
               >
@@ -2026,7 +2026,7 @@ export function ChatPage() {
                       if (canSend && !isLoading) handleSubmit(e as any);
                     }
                   }}
-                  className="h-11 rounded-lg border border-[#0D3B8E]/20 focus:border-primary focus:ring-2 focus:ring-[#0D3B8E]/10 pr-16 sm:pr-28"
+                  className="h-11 rounded-lg border border-primary/20 focus:border-primary focus:ring-2 focus:ring-primary/10 pr-16 sm:pr-28"
                   disabled={(!demoMode && !backendConnected) || isLoading}
                 />
                 {pendingFiles.length > 0 && (
@@ -2042,7 +2042,7 @@ export function ChatPage() {
               <Button
                 type="submit"
                 disabled={!canSend || isLoading}
-                className="flex-shrink-0 h-11 px-3 md:px-6 rounded-lg shadow-md bg-[#0D3B8E] text-white hover:bg-[#0D3B8E]/90"
+                className="flex-shrink-0 h-11 px-3 md:px-6 rounded-lg shadow-md bg-primary text-primary-foreground hover:bg-primary/90"
               >
                 {isLoading ? (
                   <>
@@ -2058,14 +2058,14 @@ export function ChatPage() {
               </Button>
             </form>
             <div className="flex items-center justify-between mt-3">
-              <p className="text-xs text-[#6B7280]">
+              <p className="text-xs text-muted-foreground">
                 {demoMode
                   ? "Demo Mode: prototyping only"
                   : backendConnected
                     ? "Connected • CSV, Excel, PDF, JSON, TXT (max 10 MB)"
                     : "Connect backend for full functionality"}
               </p>
-              <p className="text-xs text-[#6B7280]">Enter to send</p>
+              <p className="text-xs text-muted-foreground">Enter to send</p>
             </div>
           </div>
         </Card>
@@ -2074,10 +2074,10 @@ export function ChatPage() {
       {/* Mobile chat history sheet */}
       <Sheet open={mobileHistoryOpen} onOpenChange={setMobileHistoryOpen}>
         <SheetContent side="left" className="w-72 p-0 flex flex-col">
-          <SheetHeader className="p-4 border-b border-[#E5E7EB]/50">
+          <SheetHeader className="p-4 border-b border-border/50">
             <SheetTitle>Chat History</SheetTitle>
           </SheetHeader>
-          <div className="p-3 border-b border-[#E5E7EB]/50 space-y-2">
+          <div className="p-3 border-b border-border/50 space-y-2">
             <Button
               onClick={() => {
                 createNewConversation();
@@ -2095,7 +2095,7 @@ export function ChatPage() {
                 <Loader2 className="h-5 w-5 animate-spin inline" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <p className="text-xs text-[#6B7280] text-center py-8">No conversations yet</p>
+              <p className="text-xs text-muted-foreground text-center py-8">No conversations yet</p>
             ) : (
               filteredConversations.map((conv) => (
                 <div
@@ -2115,8 +2115,8 @@ export function ChatPage() {
                   className={cn(
                     "w-full text-left p-2.5 rounded-lg cursor-pointer transition-colors",
                     conversationId === conv.id
-                      ? "bg-[#0D3B8E] text-white"
-                      : "hover:bg-[#EEF2F7]",
+                      ? "bg-primary text-primary-foreground"
+                      : "hover:bg-muted",
                   )}
                 >
                   <div className="font-medium truncate text-sm">

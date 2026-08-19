@@ -1,6 +1,6 @@
 "use client";
 
-import { ReactNode, useEffect, useState } from "react";
+import { ReactNode, useCallback, useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Sidebar, Header } from "./sidebar";
 import { useApp } from "@/contexts/app-context";
@@ -12,9 +12,21 @@ interface DashboardLayoutProps {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
   const router = useRouter();
-  const { isAuthenticated } = useApp();
+  const { isAuthenticated, logout } = useApp();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  const resetInactivityTimer = useCallback(() => {
+    if (inactivityTimerRef.current) {
+      clearTimeout(inactivityTimerRef.current);
+    }
+
+    inactivityTimerRef.current = setTimeout(async () => {
+      await logout();
+      router.push("/auth/login?reason=inactive");
+    }, 5 * 60 * 1000);
+  }, [logout, router]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -22,12 +34,39 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     }
   }, [isAuthenticated, router]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const activityEvents = [
+      "pointerdown",
+      "pointermove",
+      "keydown",
+      "scroll",
+      "touchstart",
+      "wheel",
+    ] as const;
+
+    resetInactivityTimer();
+    activityEvents.forEach((event) => {
+      window.addEventListener(event, resetInactivityTimer, { passive: true });
+    });
+
+    return () => {
+      if (inactivityTimerRef.current) {
+        clearTimeout(inactivityTimerRef.current);
+      }
+      activityEvents.forEach((event) => {
+        window.removeEventListener(event, resetInactivityTimer);
+      });
+    };
+  }, [isAuthenticated, resetInactivityTimer]);
+
   if (!isAuthenticated) {
     return null;
   }
 
   return (
-    <div className="fixed inset-0 overflow-hidden bg-[#F8F9FB]">
+    <div className="fixed inset-0 overflow-hidden bg-background">
       {mobileSidebarOpen && (
         <div
           className="fixed inset-0 z-30 bg-black/50 md:hidden"
