@@ -94,7 +94,14 @@ export function SettingsPage() {
         method: "GET",
         signal: AbortSignal.timeout(5000),
       });
-      setConnectionTestResult(response.ok ? "success" : "error");
+      const health = await response.json().catch(() => null);
+      setConnectionTestResult(
+        response.ok &&
+          health?.status !== "degraded" &&
+          health?.database !== "error"
+          ? "success"
+          : "error",
+      );
     } catch {
       setConnectionTestResult("error");
     } finally {
@@ -135,7 +142,7 @@ export function SettingsPage() {
               {/* Demo Mode Toggle */}
               <div className="flex items-center justify-between p-4 rounded-lg bg-muted/50 border border-border">
                 <div className="flex items-center gap-4">
-                  <div className={`p-2 rounded-lg ${demoMode ? "bg-amber-100 dark:bg-amber-900/50" : "bg-muted"}`}>
+                  <div className={`p-2 rounded-lg ${demoMode ? "bg-warning/10" : "bg-muted"}`}>
                     {demoMode ? (
                       <ToggleRight className="h-5 w-5 text-warning" />
                     ) : (
@@ -164,8 +171,8 @@ export function SettingsPage() {
                       demoMode
                         ? "bg-muted text-muted-foreground"
                         : backendConnected
-                        ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-300"
-                        : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-300"
+                        ? "bg-success/10 text-success"
+                        : "bg-destructive/10 text-destructive"
                     }
                   >
                     {demoMode ? (

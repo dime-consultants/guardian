@@ -404,6 +404,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
       setUserState(null);
       setAccessToken(null);
       setIsAuthenticated(false);
+      setDemoMode(false);
+      localStorage.setItem("kn-demo-mode", "false");
     }
   };
 
@@ -489,7 +491,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
           credentials: "include",
           signal: AbortSignal.timeout(5000),
         });
-        setBackendConnected(response.ok);
+        const health = await response.json().catch(() => null);
+        setBackendConnected(
+          response.ok &&
+            health?.status !== "degraded" &&
+            health?.database !== "error",
+        );
       } catch {
         setBackendConnected(false);
       }
@@ -502,10 +509,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
   if (isInitializing) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-[#F8F9FB]">
+      <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="flex flex-col items-center gap-4">
-          <div className="h-10 w-10 animate-spin rounded-full border-4 border-[#0D3B8E]/20 border-t-[#0D3B8E]" />
-          <p className="text-sm text-[#6B7280]">Loading Guardian...</p>
+          <div className="h-10 w-10 animate-spin rounded-full border-4 border-primary/15 border-t-primary" />
+          <p className="text-sm text-muted-foreground">Loading Guardian...</p>
         </div>
       </div>
     );
