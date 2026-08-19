@@ -5,11 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import {
-  AuthDivider,
-  AuthShell,
-  ProviderButtons,
-} from "@/components/auth/auth-shell";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -51,41 +47,41 @@ export default function LoginPage() {
 
   return (
     <AuthShell
-      title="Get started with Guardian"
-      subtitle="Sign in to continue loan reconciliation, arrears verification, and account review."
+      title="Login"
+      subtitle="We suggest using the email address you use at work."
       footer={
-        <p className="text-center text-[13px] text-[#64748B]">
-          Don't have an account?{" "}
-          <Link href="/auth/signup" className="font-semibold text-[#0F172A]">
+        <p className="text-center text-[13px] text-muted-foreground">
+          You don't have an account yet?{" "}
+          <Link href="/auth/signup" className="font-semibold text-primary">
             Sign up
           </Link>
         </p>
       }
     >
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-[13px] text-red-700">
+        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
           {error}
         </div>
       )}
 
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-[12px] text-[#0F172A]">
-            Email
+          <Label htmlFor="email" className="text-[12px] text-foreground">
+            Address email
           </Label>
           <Input
             id="email"
             type="email"
-            placeholder="Enter your email"
+            placeholder="name@company.com"
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={isLoading}
-            className="h-10 rounded-md border-[#E2E8F0] bg-white text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+            className="h-10 rounded-md border-border bg-card text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
           />
         </div>
 
         <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-[12px] text-[#0F172A]">
+          <Label htmlFor="password" className="text-[12px] text-foreground">
             Password
           </Label>
           <div className="relative">
@@ -96,12 +92,12 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={isLoading}
-              className="h-10 rounded-md border-[#E2E8F0] bg-white pr-10 text-[13px] shadow-none placeholder:text-[#CBD5E1] focus-visible:border-[#0D3B8E] focus-visible:ring-[#0D3B8E]/15"
+              className="h-10 rounded-md border-border bg-card pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
             />
             <button
               type="button"
               onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-[#64748B] transition hover:text-[#0D3B8E]"
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-primary"
               aria-label={showPassword ? "Hide password" : "Show password"}
             >
               {showPassword ? (
@@ -111,12 +107,17 @@ export default function LoginPage() {
               )}
             </button>
           </div>
+          <div className="text-right">
+            <Link href="#" className="text-[12px] text-muted-foreground transition hover:text-primary">
+              Forgot password
+            </Link>
+          </div>
         </div>
 
         <Button
           type="submit"
           disabled={isLoading || !email || !password}
-          className="h-10 w-full rounded-md bg-[#111111] text-[13px] font-semibold text-white shadow-[0_1px_2px_rgba(15,23,42,0.16)] hover:bg-[#0D3B8E]"
+          className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
         >
           {isLoading ? (
             <>
@@ -124,13 +125,10 @@ export default function LoginPage() {
               Logging in...
             </>
           ) : (
-            "Log in with email"
+            "Login"
           )}
         </Button>
       </form>
-
-      <AuthDivider />
-      <ProviderButtons />
     </AuthShell>
   );
 }

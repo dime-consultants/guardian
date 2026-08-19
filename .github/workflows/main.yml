@@ -22,10 +22,12 @@ jobs:
           if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
             ENV_NAME="prod"
             NODE_ENV="production"
+            API_PORT="3004"
             COMPOSE_FILE="docker-compose.yml"
           elif [[ "${{ github.ref_name }}" == "develop" ]]; then
             ENV_NAME="stage"
-            NODE_ENV="stage"
+            NODE_ENV="production"
+            API_PORT="3005"
             COMPOSE_FILE="docker-compose.yml"
           else
             echo "Error: unsupported branch '${{ github.ref_name }}'"
@@ -49,7 +51,9 @@ jobs:
           # Variables/secrets that the infrastructure deployment
           # should expose before running docker compose.
           declare -A secrets=(
+            ["SHARED_ENV"]="$ENV_NAME"
             ["NODE_ENV"]="$NODE_ENV"
+            ["API_PORT"]="$API_PORT"
           )
 
           SECRETS_JSON="{}"
@@ -75,6 +79,7 @@ jobs:
 
           echo "Environment: $ENV_NAME"
           echo "NODE_ENV: $NODE_ENV"
+          echo "API_PORT: $API_PORT"
           echo "Compose file: $COMPOSE_FILE"
           echo "Image tag: $IMAGE_TAG"
 
@@ -103,7 +108,7 @@ jobs:
         uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.INFRA_PAT }}
-          repository: stevendegwa/infra
+          repository:  dime-consultants/infrastructure
           event-type: deploy-app
           client-payload: |
             {
