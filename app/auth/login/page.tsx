@@ -5,11 +5,7 @@ import { useRouter } from "next/navigation";
 import { useState } from "react";
 import { Eye, EyeOff, Loader2 } from "lucide-react";
 
-import {
-  AuthDivider,
-  AuthShell,
-  ProviderButtons,
-} from "@/components/auth/auth-shell";
+import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -133,9 +129,6 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
-
-      <AuthDivider />
-      <ProviderButtons />
     </AuthShell>
   );
 }
