@@ -2,14 +2,14 @@ version: "3"
 
 services:
   guardian-ui:
-    container_name: guardian_ui
+    container_name: ${SHARED_ENV}_guardian_ui
     image: ${IMAGE_TAG}
 
     ports:
-      - ${API_PORT}:3005
+      - ${API_PORT}:3000
 
     environment:
-      - NODE_ENV=${NODE_ENV}
+      - NODE_ENV=${NODE_ENV:-production}
       - PORT=3000
 
     networks:
