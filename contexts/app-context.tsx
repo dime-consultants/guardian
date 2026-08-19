@@ -171,21 +171,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
     // If 401 and we haven't retried yet, try to refresh token
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 401 detected, attempting token refresh...");
-<<<<<<<<< Temporary merge branch 1
       const refreshedToken = await refreshToken();
       if (refreshedToken) {
         // Retry with the token returned by refresh, not the stale state value.
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
         retryHeaders.Authorization = `Bearer ${refreshedToken}`;
-=========
-      const refreshed = await refreshToken();
-      if (refreshed && accessTokenRef.current) {
-        // Retry with new token
-        const retryOptions = { ...options, _retry: true };
-        const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
->>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
@@ -233,19 +224,11 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
     if (response.status === 401 && accessTokenRef.current && !options._retry) {
       console.log("🔐 Auth 401, refreshing token...");
-<<<<<<<<< Temporary merge branch 1
       const refreshedToken = await refreshToken();
       if (refreshedToken) {
         const retryOptions = { ...options, _retry: true };
         const retryHeaders = { ...headers };
         retryHeaders.Authorization = `Bearer ${refreshedToken}`;
-=========
-      const refreshed = await refreshToken();
-      if (refreshed && accessTokenRef.current) {
-        const retryOptions = { ...options, _retry: true };
-        const retryHeaders = { ...headers };
-        retryHeaders.Authorization = `Bearer ${accessTokenRef.current}`;
->>>>>>>>> Temporary merge branch 2
 
         const retryResponse = await fetch(url, {
           method: options.method ?? "GET",
