@@ -15,19 +15,21 @@ import { useApp } from "@/contexts/app-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, requestEmailOtp, verifyEmailOtp } = useApp();
+  const { login, verifyLoginOtp } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
-  const [needsVerification, setNeedsVerification] = useState(false);
+  const [needsLoginOtp, setNeedsLoginOtp] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setNotice("");
 
     try {
       setIsLoading(true);
@@ -44,7 +46,14 @@ export default function LoginPage() {
       router.push("/");
     } catch (err: any) {
       if (err.requiresEmailVerification) {
-        setNeedsVerification(true);
+        setError(err.message || "Please verify your email before logging in.");
+        return;
+      }
+      if (err.requiresLoginOtp) {
+        setNeedsLoginOtp(true);
+        setOtp("");
+        setNotice(err.message || "Enter the one-time code to continue.");
+        return;
       }
       setError(err.message || "Login failed. Please try again.");
     } finally {
@@ -54,10 +63,10 @@ export default function LoginPage() {
 
   const handleVerify = async () => {
     setError("");
+    setNotice("");
     try {
       setIsLoading(true);
-      await verifyEmailOtp(email, otp);
-      await login(email, password);
+      await verifyLoginOtp(email, otp);
       router.push("/");
     } catch (err: any) {
       setError(err.message || "Verification failed. Please try again.");
@@ -68,10 +77,17 @@ export default function LoginPage() {
 
   const handleResend = async () => {
     setError("");
+    setNotice("");
     try {
       setIsLoading(true);
-      await requestEmailOtp(email);
+      await login(email, password);
+      setOtp("");
     } catch (err: any) {
+      if (err.requiresLoginOtp) {
+        setOtp("");
+        setNotice(err.message || "A new login code is ready.");
+        return;
+      }
       setError(err.message || "Could not send a new code.");
     } finally {
       setIsLoading(false);
@@ -96,22 +112,27 @@ export default function LoginPage() {
           {error}
         </div>
       )}
+      {notice && (
+        <div className="mb-4 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-[13px] text-primary">
+          {notice}
+        </div>
+      )}
 
-      {needsVerification ? (
+      {needsLoginOtp ? (
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
             <ShieldCheck className="mt-0.5 size-4 text-primary" />
             <div className="space-y-1 text-[13px]">
-              <p className="font-medium text-foreground">Verify your email</p>
+              <p className="font-medium text-foreground">Enter your login code</p>
               <p className="text-muted-foreground">
-                Enter the 6-digit code sent to {email}.
+                Enter the one-time code for {email}.
               </p>
             </div>
           </div>
 
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5">
-              <Label className="text-[12px] text-foreground">Verification code</Label>
+              <Label className="text-[12px] text-foreground">Login OTP</Label>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="size-3.5 text-muted-foreground" />
@@ -132,12 +153,12 @@ export default function LoginPage() {
 
           <Button
             type="button"
-            disabled={isLoading || otp.length !== 6}
+            disabled={isLoading || otp.length < 5}
             onClick={handleVerify}
             className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            Verify and login
+            Verify OTP and login
           </Button>
           <Button
             type="button"

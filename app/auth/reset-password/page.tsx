@@ -36,9 +36,9 @@ export default function ResetPasswordPage() {
       if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
         throw new Error("Please enter a valid email address.");
       }
-      await requestPasswordReset(email);
+      const nextMessage = await requestPasswordReset(email);
       setCodeSent(true);
-      setMessage("Check your email for the reset code.");
+      setMessage(nextMessage);
     } catch (err: any) {
       setError(err.message || "Could not send reset code.");
     } finally {
@@ -53,7 +53,7 @@ export default function ResetPasswordPage() {
 
     try {
       setIsLoading(true);
-      if (code.length !== 6) throw new Error("Enter the 6-digit code.");
+      if (code.length < 5) throw new Error("Enter the one-time code.");
       if (password.length < 8) throw new Error("Password must be at least 8 characters.");
       await confirmPasswordReset(email, code, password);
       router.push("/auth/login");
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
             </div>
           </div>
 
-          <Button disabled={isLoading || code.length !== 6 || !password} className="h-10 w-full rounded-md text-[13px] font-semibold">
+          <Button disabled={isLoading || code.length < 5 || !password} className="h-10 w-full rounded-md text-[13px] font-semibold">
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
             Reset password
           </Button>
@@ -166,8 +166,8 @@ export default function ResetPasswordPage() {
             variant="ghost"
             disabled={isLoading}
             onClick={async () => {
-              await requestPasswordReset(email);
-              setMessage("A new reset code has been sent.");
+              const nextMessage = await requestPasswordReset(email);
+              setMessage(nextMessage);
             }}
             className="h-9 w-full text-[13px]"
           >

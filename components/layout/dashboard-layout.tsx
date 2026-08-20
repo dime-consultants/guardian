@@ -5,6 +5,10 @@ import { useRouter } from "next/navigation";
 import { Sidebar, Header } from "./sidebar";
 import { useApp } from "@/contexts/app-context";
 import { cn } from "@/lib/utils";
+import { Button } from "@/components/ui/button";
+
+const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
+const COUNTDOWN_WARNING_MS = 60 * 1000;
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -15,18 +19,14 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const { isAuthenticated, logout } = useApp();
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const inactivityTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [sessionDeadline, setSessionDeadline] = useState<number>(() => Date.now() + INACTIVITY_LIMIT_MS);
+  const [remainingMs, setRemainingMs] = useState(INACTIVITY_LIMIT_MS);
+  const isLoggingOutRef = useRef(false);
 
   const resetInactivityTimer = useCallback(() => {
-    if (inactivityTimerRef.current) {
-      clearTimeout(inactivityTimerRef.current);
-    }
-
-    inactivityTimerRef.current = setTimeout(async () => {
-      await logout();
-      router.push("/auth/login?reason=inactive");
-    }, 5 * 60 * 1000);
-  }, [logout, router]);
+    setSessionDeadline(Date.now() + INACTIVITY_LIMIT_MS);
+    setRemainingMs(INACTIVITY_LIMIT_MS);
+  }, []);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,18 +52,35 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     });
 
     return () => {
-      if (inactivityTimerRef.current) {
-        clearTimeout(inactivityTimerRef.current);
-      }
       activityEvents.forEach((event) => {
         window.removeEventListener(event, resetInactivityTimer);
       });
     };
   }, [isAuthenticated, resetInactivityTimer]);
 
+  useEffect(() => {
+    if (!isAuthenticated) return;
+
+    const interval = setInterval(async () => {
+      const nextRemaining = Math.max(sessionDeadline - Date.now(), 0);
+      setRemainingMs(nextRemaining);
+
+      if (nextRemaining <= 0 && !isLoggingOutRef.current) {
+        isLoggingOutRef.current = true;
+        await logout();
+        router.push("/auth/login?reason=inactive");
+      }
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [isAuthenticated, logout, router, sessionDeadline]);
+
   if (!isAuthenticated) {
     return null;
   }
+
+  const showCountdown = remainingMs <= COUNTDOWN_WARNING_MS;
+  const remainingSeconds = Math.max(Math.ceil(remainingMs / 1000), 0);
 
   return (
     <div className="fixed inset-0 overflow-hidden bg-background">
@@ -90,6 +107,23 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
           {children}
         </main>
       </div>
+      {showCountdown && (
+        <div className="fixed bottom-4 right-4 z-50 w-[min(calc(100vw-2rem),360px)] rounded-lg border border-warning/30 bg-card p-4 shadow-lg">
+          <p className="text-sm font-semibold text-foreground">Session expiring soon</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            You will be logged out in {remainingSeconds}s due to inactivity.
+          </p>
+          <div className="mt-3 h-1.5 overflow-hidden rounded-full bg-muted">
+            <div
+              className="h-full rounded-full bg-warning transition-all"
+              style={{ width: `${Math.max((remainingMs / COUNTDOWN_WARNING_MS) * 100, 0)}%` }}
+            />
+          </div>
+          <Button size="sm" className="mt-3 h-8 w-full text-xs font-medium" onClick={resetInactivityTimer}>
+            Extend session
+          </Button>
+        </div>
+      )}
     </div>
   );
 }

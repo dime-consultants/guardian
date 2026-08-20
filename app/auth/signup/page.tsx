@@ -25,7 +25,7 @@ const initialForm = {
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup, login, requestEmailOtp, verifyEmailOtp } = useApp();
+  const { signup, requestEmailOtp, verifyEmailOtp } = useApp();
 
   const [formData, setFormData] = useState(initialForm);
   const [showPassword, setShowPassword] = useState(false);
@@ -98,8 +98,7 @@ export default function SignupPage() {
     try {
       setIsLoading(true);
       await verifyEmailOtp(formData.email, otp);
-      await login(formData.email, formData.password);
-      router.push("/");
+      router.push("/auth/login");
     } catch (err: any) {
       setError(err.message || "Verification failed. Please try again.");
     } finally {
@@ -145,7 +144,7 @@ export default function SignupPage() {
             <div className="space-y-1 text-[13px]">
               <p className="font-medium text-foreground">Check your email</p>
               <p className="text-muted-foreground">
-                Enter the 6-digit code sent to {formData.email}.
+                Enter the one-time code for {formData.email}.
               </p>
             </div>
           </div>
@@ -171,7 +170,7 @@ export default function SignupPage() {
           </div>
           <Button
             type="button"
-            disabled={isLoading || otp.length !== 6}
+            disabled={isLoading || otp.length < 5}
             onClick={handleVerify}
             className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
           >
