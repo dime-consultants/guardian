@@ -47,7 +47,7 @@ import {
 import { Plus, Pencil, Trash2, FlaskConical } from "lucide-react";
 
 interface BackendTool {
-  id: number;
+  id: string;
   name: string;
   display_name?: string;
   description?: string;
@@ -62,7 +62,7 @@ interface BackendTool {
 }
 
 interface ToolCard {
-  id: number | string;
+  id: string;
   /** apiName is the raw snake_case identifier the backend expects in
    * tool_name (ToolDefinition.name) — distinct from `name` below, which is
    * the human-readable display label. Conflating the two previously meant

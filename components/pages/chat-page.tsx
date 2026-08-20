@@ -64,7 +64,7 @@ import {
 // ─── Types ────────────────────────────────────────────────────────────────────
 
 interface Attachment {
-  id: number;
+  id: string;
   filename: string;
   file_type: string;
   file_size_bytes: number;
@@ -83,7 +83,7 @@ interface Conversation {
 }
 
 interface Message {
-  id: string | number;
+  id: string;
   role: "user" | "assistant";
   content: string;
   created_at: string;
@@ -1064,7 +1064,7 @@ export function ChatPage() {
       }
 
       const assistant: Message = {
-        id: assistantMessageId,
+        id: String(assistantMessageId),
         role: "assistant",
         content: assistantContent,
         created_at: assistantCreatedAt,

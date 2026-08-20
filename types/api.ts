@@ -272,7 +272,7 @@ export interface CustomToolConfig {
 }
 
 export interface CustomTool {
-  id: number;
+  id: string;
   name: string;
   display_name: string;
   description: string;
@@ -311,7 +311,7 @@ export type CustomToolUpdatePayload = Partial<
 >;
 
 export interface CustomToolTestResponse {
-  tool_call_id: number;
+  tool_call_id: string;
   duration_ms: number;
   result: { ok: boolean; error?: string; [key: string]: unknown };
 }

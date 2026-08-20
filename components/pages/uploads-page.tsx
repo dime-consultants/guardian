@@ -37,7 +37,7 @@ import { Wrench } from "lucide-react";
 import Link from "next/link";
 
 interface FileItem {
-  id: number;
+  id: string;
   name: string;
   type: string;
   size: number;
@@ -59,7 +59,7 @@ interface FileListResponse {
 
 const demoFiles: FileItem[] = [
   {
-    id: 1,
+    id: "1",
     name: "may_2024_invoices_batch1.txt",
     type: "text/plain",
     size: 2400000,
@@ -72,7 +72,7 @@ const demoFiles: FileItem[] = [
     uploadedBy: "Luther Isaboke",
   },
   {
-    id: 2,
+    id: "2",
     name: "telephone_billing_may_577pages.pdf",
     type: "application/pdf",
     size: 15800000,
@@ -85,7 +85,7 @@ const demoFiles: FileItem[] = [
     uploadedBy: "Luther Isaboke",
   },
   {
-    id: 3,
+    id: "3",
     name: "acon_kra_export_may.xlsx",
     type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     size: 4200000,
@@ -183,7 +183,7 @@ export function UploadsPage() {
   const [currentPage, setCurrentPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
   const [filterType, setFilterType] = useState<string | null>(null);
-  const [selectedFileIds, setSelectedFileIds] = useState<Set<number>>(new Set());
+  const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [showBatchToolDialog, setShowBatchToolDialog] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const showEmptyState = !demoMode && !backendConnected;
@@ -274,7 +274,7 @@ export function UploadsPage() {
   );
 
   // Handle file delete
-  const deleteFile = async (fileId: number) => {
+  const deleteFile = async (fileId: string) => {
     if (!backendConnected || !apiFetch) return;
 
     try {
@@ -288,7 +288,7 @@ export function UploadsPage() {
   };
 
   // Handle file download
-  const downloadFile = async (fileId: number, fileName: string) => {
+  const downloadFile = async (fileId: string, fileName: string) => {
     if (!backendConnected || !apiFetch) return;
 
     try {
@@ -315,7 +315,7 @@ export function UploadsPage() {
       )
     : files;
 
-  const toggleFileSelection = (fileId: number) => {
+  const toggleFileSelection = (fileId: string) => {
     setSelectedFileIds((prev) => {
       const next = new Set(prev);
       if (next.has(fileId)) next.delete(fileId);

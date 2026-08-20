@@ -27,7 +27,7 @@ interface User {
   last_name?: string;
   department?: string;
   phone?: string;
-  organization?: number | null;
+  organization?: string | null;
   organization_name?: string | null;
 }
 
@@ -55,6 +55,10 @@ interface AppContextType {
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
   signup: (payload: SignupPayload) => Promise<void>;
+  requestEmailOtp: (email: string) => Promise<void>;
+  verifyEmailOtp: (email: string, code: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<void>;
+  confirmPasswordReset: (email: string, code: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
@@ -337,10 +341,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!response.ok) {
         const responseText = await response.text();
         let errorMessage = `Login failed (${response.status})`;
+        let requiresEmailVerification = false;
 
         try {
           const errorData = JSON.parse(responseText);
           const payload = errorData.error ?? errorData;
+          requiresEmailVerification = Boolean(payload.requires_email_verification);
           const detail = payload.details;
           const fieldMessage = detail
             ? Object.values(detail).flat().find(Boolean)
@@ -353,6 +359,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        if (requiresEmailVerification) {
+          const error = new Error(String(errorMessage)) as Error & {
+            requiresEmailVerification?: boolean;
+          };
+          error.requiresEmailVerification = true;
+          throw error;
+        }
         throw new Error(String(errorMessage));
       }
 
@@ -402,10 +415,60 @@ export function AppProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      await login(payload.email, payload.password);
+      return;
     } catch (error) {
       console.error("Signup error:", error);
       throw error;
+    }
+  };
+
+  const requestEmailOtp = async (email: string) => {
+    const response = await authFetch("email-otp/request/", {
+      method: "POST",
+      body: { email },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Could not send verification code.");
+    }
+  };
+
+  const verifyEmailOtp = async (email: string, code: string) => {
+    const response = await authFetch("email-otp/verify/", {
+      method: "POST",
+      body: { email, code },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Invalid verification code.");
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    const response = await authFetch("password-reset/request/", {
+      method: "POST",
+      body: { email },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Could not send reset code.");
+    }
+  };
+
+  const confirmPasswordReset = async (
+    email: string,
+    code: string,
+    password: string,
+  ) => {
+    const response = await authFetch("password-reset/confirm/", {
+      method: "POST",
+      body: { email, code, password },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail || errorData.password?.[0] || "Could not reset password.",
+      );
     }
   };
 
@@ -544,6 +607,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         accessToken,
         login,
         signup,
+        requestEmailOtp,
+        verifyEmailOtp,
+        requestPasswordReset,
+        confirmPasswordReset,
         logout,
         setUser,
         fetchUserProfile,

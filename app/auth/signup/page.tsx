@@ -3,12 +3,14 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, HelpCircle, Loader2, ShieldCheck } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useApp } from "@/contexts/app-context";
 
 const initialForm = {
@@ -23,11 +25,13 @@ const initialForm = {
 
 export default function SignupPage() {
   const router = useRouter();
-  const { signup } = useApp();
+  const { signup, login, requestEmailOtp, verifyEmailOtp } = useApp();
 
   const [formData, setFormData] = useState(initialForm);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  const [otp, setOtp] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
 
@@ -81,9 +85,35 @@ export default function SignupPage() {
         phone,
       });
 
-      router.push("/");
+      setNeedsVerification(true);
     } catch (err: any) {
       setError(err.message || "Signup failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setError("");
+    try {
+      setIsLoading(true);
+      await verifyEmailOtp(formData.email, otp);
+      await login(formData.email, formData.password);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    try {
+      setIsLoading(true);
+      await requestEmailOtp(formData.email);
+    } catch (err: any) {
+      setError(err.message || "Could not send a new code.");
     } finally {
       setIsLoading(false);
     }
@@ -108,6 +138,51 @@ export default function SignupPage() {
         </div>
       )}
 
+      {needsVerification ? (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
+            <ShieldCheck className="mt-0.5 size-4 text-primary" />
+            <div className="space-y-1 text-[13px]">
+              <p className="font-medium text-foreground">Check your email</p>
+              <p className="text-muted-foreground">
+                Enter the 6-digit code sent to {formData.email}.
+              </p>
+            </div>
+          </div>
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-[12px] text-foreground">Verification code</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="size-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>This keeps unverified emails out of active accounts.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <InputOTP maxLength={6} value={otp} onChange={setOtp} disabled={isLoading}>
+              <InputOTPGroup>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <InputOTPSlot key={index} index={index} />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+          <Button
+            type="button"
+            disabled={isLoading || otp.length !== 6}
+            onClick={handleVerify}
+            className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+            Verify account
+          </Button>
+          <Button type="button" variant="ghost" disabled={isLoading} onClick={handleResend} className="h-9 w-full text-[13px]">
+            Send a new code
+          </Button>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="auth-scroll max-h-[52vh] space-y-3 overflow-y-auto pr-1 sm:max-h-none sm:overflow-visible sm:pr-0">
         <div className="grid gap-3 sm:grid-cols-2">
           <AuthField
@@ -210,6 +285,7 @@ export default function SignupPage() {
           )}
         </Button>
       </form>
+      )}
     </AuthShell>
   );
 }

@@ -3,20 +3,24 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, HelpCircle, Loader2, ShieldCheck } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useApp } from "@/contexts/app-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useApp();
+  const { login, requestEmailOtp, verifyEmailOtp } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [needsVerification, setNeedsVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -39,7 +43,36 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err: any) {
+      if (err.requiresEmailVerification) {
+        setNeedsVerification(true);
+      }
       setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setError("");
+    try {
+      setIsLoading(true);
+      await verifyEmailOtp(email, otp);
+      await login(email, password);
+      router.push("/");
+    } catch (err: any) {
+      setError(err.message || "Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    try {
+      setIsLoading(true);
+      await requestEmailOtp(email);
+    } catch (err: any) {
+      setError(err.message || "Could not send a new code.");
     } finally {
       setIsLoading(false);
     }
@@ -64,6 +97,59 @@ export default function LoginPage() {
         </div>
       )}
 
+      {needsVerification ? (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
+            <ShieldCheck className="mt-0.5 size-4 text-primary" />
+            <div className="space-y-1 text-[13px]">
+              <p className="font-medium text-foreground">Verify your email</p>
+              <p className="text-muted-foreground">
+                Enter the 6-digit code sent to {email}.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-[12px] text-foreground">Verification code</Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="size-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>The code expires shortly and can only be used once.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <InputOTP maxLength={6} value={otp} onChange={setOtp} disabled={isLoading}>
+              <InputOTPGroup>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <InputOTPSlot key={index} index={index} />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <Button
+            type="button"
+            disabled={isLoading || otp.length !== 6}
+            onClick={handleVerify}
+            className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          >
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+            Verify and login
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isLoading}
+            onClick={handleResend}
+            className="h-9 w-full text-[13px]"
+          >
+            Send a new code
+          </Button>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[12px] text-foreground">
@@ -108,7 +194,7 @@ export default function LoginPage() {
             </button>
           </div>
           <div className="text-right">
-            <Link href="#" className="text-[12px] text-muted-foreground transition hover:text-primary">
+            <Link href="/auth/reset-password" className="text-[12px] text-muted-foreground transition hover:text-primary">
               Forgot password
             </Link>
           </div>
@@ -129,6 +215,7 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
+      )}
     </AuthShell>
   );
 }

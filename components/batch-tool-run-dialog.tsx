@@ -21,7 +21,7 @@ import { type JSONSchema, type JSONSchemaProperty, renderSchemaInput } from "@/l
 import { missingRequiredArgs } from "@/components/tool-run-form";
 
 interface FileRef {
-  id: number;
+  id: string;
   name: string;
 }
 
@@ -30,7 +30,7 @@ interface MergedTool {
   displayName: string;
   description: string;
   isCustom: boolean;
-  customId?: number;
+  customId?: string;
   parametersSchema: JSONSchema;
   fileSlotKeys: string[];
 }
