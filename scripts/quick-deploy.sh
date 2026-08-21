@@ -58,7 +58,7 @@ if [ ! -f ".env.local" ]; then
     echo ""
     echo -e "${YELLOW}Please edit .env.local with your configuration:${NC}"
     echo "  - NEXT_PUBLIC_ALLOWED_HOSTS=guardian.dimeconsultants.africa,localhost"
-    echo "  - NEXT_PUBLIC_BACKEND_URL=https://invoicing.dimeconsultants.africa,http://localhost:8000"
+    echo "  - Backend URL is defined in code"
     echo "  - NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=false"
     echo ""
     read -p "Edit .env.local now? (y/n) " -n 1 -r

@@ -40,7 +40,7 @@ import { useApp } from "@/contexts/app-context";
 
 export function SettingsPage() {
   const { theme, setTheme } = useTheme();
-  const { demoMode, setDemoMode, backendConnected, backendUrl, setBackendUrl, user, updateUserProfile } = useApp();
+  const { demoMode, setDemoMode, backendConnected, backendUrl, user, updateUserProfile } = useApp();
   const [tempBackendUrl, setTempBackendUrl] = useState(backendUrl);
   const [isTestingConnection, setIsTestingConnection] = useState(false);
   const [connectionTestResult, setConnectionTestResult] = useState<"success" | "error" | null>(null);
@@ -52,6 +52,10 @@ export function SettingsPage() {
   const [phone, setPhone] = useState("");
   const [isSavingProfile, setIsSavingProfile] = useState(false);
   const [profileSaveError, setProfileSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    setTempBackendUrl(backendUrl);
+  }, [backendUrl]);
 
   useEffect(() => {
     if (!user) return;
@@ -90,7 +94,7 @@ export function SettingsPage() {
     setConnectionTestResult(null);
 
     try {
-      const response = await fetch(`${tempBackendUrl}/api/health`, {
+      const response = await fetch(`${backendUrl.replace(/\/$/, "")}/health/`, {
         method: "GET",
         signal: AbortSignal.timeout(5000),
       });
@@ -107,10 +111,6 @@ export function SettingsPage() {
     } finally {
       setIsTestingConnection(false);
     }
-  };
-
-  const saveBackendUrl = () => {
-    setBackendUrl(tempBackendUrl);
   };
 
   return (
@@ -194,9 +194,9 @@ export function SettingsPage() {
                   <Input
                     id="backend-url"
                     value={tempBackendUrl}
-                    onChange={(e) => setTempBackendUrl(e.target.value)}
-                    placeholder="http://localhost:8000"
-                    disabled={demoMode}
+                    readOnly
+                    placeholder="https://stage-invoicing.dimeconsultants.africa/api"
+                    disabled
                     className="flex-1 min-w-0"
                   />
                   <div className="flex gap-2">
@@ -210,12 +210,6 @@ export function SettingsPage() {
                       ) : (
                         <RefreshCw className="h-4 w-4" />
                       )}
-                    </Button>
-                    <Button
-                      onClick={saveBackendUrl}
-                      disabled={demoMode || tempBackendUrl === backendUrl}
-                    >
-                      Save
                     </Button>
                   </div>
                 </div>

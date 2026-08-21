@@ -13,14 +13,14 @@ export function MetricCard({ metric, loading }: MetricCardProps) {
   const TrendIcon = trendIsPositive ? TrendingUp : TrendingDown;
 
   return (
-    <article className="relative min-h-[104px] rounded-lg border border-border bg-card p-4 shadow-sm">
+    <article className="bank-card-surface relative min-h-[104px] rounded-lg border border-border/80 bg-card/95 p-4">
       {loading && <div className="absolute inset-0 rounded-lg bg-background/70" />}
       <div className="flex items-start justify-between gap-3">
         <div>
           <p className="text-xs text-muted-foreground">{metric.title}</p>
           <p className="mt-1 text-2xl font-semibold leading-none text-foreground">{metric.value}</p>
         </div>
-        <div className="flex size-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+        <div className="flex size-9 items-center justify-center rounded-md border border-primary/10 bg-primary/10 text-primary">
           <Icon className="size-4" />
         </div>
       </div>

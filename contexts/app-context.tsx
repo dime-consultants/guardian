@@ -2,7 +2,6 @@
 
 declare const process: {
   env: {
-    NEXT_PUBLIC_BACKEND_URL?: string;
     NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS?: string;
   };
 };
@@ -82,6 +81,11 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const DEFAULT_BACKEND_URL = "https://stage-invoicing.dimeconsultants.africa/api";
+const getBackendApiBaseUrl = (url: string) => {
+  const trimmedUrl = url.replace(/\/$/, "");
+  return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
+};
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -97,18 +101,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   const [demoMode, setDemoMode] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
-  const [backendUrl, setBackendUrl] = useState(
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://invoicing.dimeconsultants.africa",
-  );
+  const [backendUrl, setBackendUrlState] = useState(DEFAULT_BACKEND_URL);
+  const setBackendUrl = (_value: string) => {
+    setBackendUrlState(DEFAULT_BACKEND_URL);
+  };
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Keep browser requests same-origin so preview and production do not depend on
   // the backend allowing every deployment origin through CORS.
-  const apiUrl = (path: string) =>
-    typeof window === "undefined"
-      ? `${backendUrl}/api/${path}`
-      : `/api/backend/${path}`;
+  const apiUrl = (path: string) => {
+    const cleanPath = path.replace(/^\/+|\/+$/g, "");
+    const apiBaseUrl = getBackendApiBaseUrl(backendUrl);
+
+    return `${apiBaseUrl}/${cleanPath}/`;
+  };
 
   // Return the token as well as storing it so callers can use it before React re-renders.
   const refreshToken = async (): Promise<string | null> => {
@@ -545,16 +551,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       const savedDemoMode = localStorage.getItem("kn-demo-mode");
-      const savedBackendUrl = localStorage.getItem("kn-backend-url");
+      localStorage.removeItem("kn-backend-url");
 
       if (savedDemoMode !== null) {
         setDemoMode(savedDemoMode === "true");
-      }
-      if (
-        savedBackendUrl &&
-        savedBackendUrl !== "https://invoicing.dimeconsultants.africa"
-      ) {
-        setBackendUrl(savedBackendUrl);
       }
 
       if (savedDemoMode === "true") {
@@ -595,10 +595,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [demoMode, isAuthenticated]);
-
-  useEffect(() => {
-    localStorage.setItem("kn-backend-url", backendUrl);
-  }, [backendUrl]);
 
   // Check backend connection
   useEffect(() => {

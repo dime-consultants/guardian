@@ -103,7 +103,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         )}
       >
         <Header onMobileMenuToggle={() => setMobileSidebarOpen((v) => !v)} />
-        <main className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 main-scroll">
+        <main className="main-scroll flex-1 min-h-0 overflow-y-auto overflow-x-hidden bg-[linear-gradient(180deg,rgba(255,255,255,0.34),transparent_34%)] p-4 md:p-6">
           {children}
         </main>
       </div>

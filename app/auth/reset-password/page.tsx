@@ -78,12 +78,12 @@ export default function ResetPasswordPage() {
       }
     >
       {error && (
-        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
+        <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
           {error}
         </div>
       )}
       {message && (
-        <div className="mb-4 rounded-md border border-primary/20 bg-primary/10 px-3 py-2 text-[13px] text-primary">
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-[13px] text-primary">
           {message}
         </div>
       )}
@@ -101,10 +101,10 @@ export default function ResetPasswordPage() {
               value={email}
               onChange={(event) => setEmail(event.target.value)}
               disabled={isLoading}
-              className="h-10 rounded-md border-border bg-card text-[13px] shadow-sm"
+              className="auth-input h-10 rounded-lg border-border/80 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
             />
           </div>
-          <Button disabled={isLoading || !email} className="h-10 w-full rounded-md text-[13px] font-semibold">
+          <Button disabled={isLoading || !email} className="h-10 w-full rounded-lg text-[13px] font-semibold shadow-sm">
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
             Send reset code
           </Button>
@@ -144,7 +144,7 @@ export default function ResetPasswordPage() {
                 value={password}
                 onChange={(event) => setPassword(event.target.value)}
                 disabled={isLoading}
-                className="h-10 rounded-md border-border bg-card pr-10 text-[13px] shadow-sm"
+                className="auth-input h-10 rounded-lg border-border/80 pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
               />
               <button
                 type="button"
@@ -157,7 +157,7 @@ export default function ResetPasswordPage() {
             </div>
           </div>
 
-          <Button disabled={isLoading || code.length < 5 || !password} className="h-10 w-full rounded-md text-[13px] font-semibold">
+          <Button disabled={isLoading || code.length < 5 || !password} className="h-10 w-full rounded-lg text-[13px] font-semibold shadow-sm">
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
             Reset password
           </Button>

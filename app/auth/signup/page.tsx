@@ -132,14 +132,14 @@ export default function SignupPage() {
       }
     >
       {error && (
-        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
+        <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
           {error}
         </div>
       )}
 
       {needsVerification ? (
         <div className="space-y-4">
-          <div className="flex items-start gap-3 rounded-md border border-border bg-card p-3">
+          <div className="flex items-start gap-3 rounded-lg border border-border/80 bg-background/60 p-3">
             <ShieldCheck className="mt-0.5 size-4 text-primary" />
             <div className="space-y-1 text-[13px]">
               <p className="font-medium text-foreground">Check your email</p>
@@ -172,7 +172,7 @@ export default function SignupPage() {
             type="button"
             disabled={isLoading || otp.length < 5}
             onClick={handleVerify}
-            className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+            className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
             Verify account
@@ -272,7 +272,7 @@ export default function SignupPage() {
         <Button
           type="submit"
           disabled={isLoading}
-          className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
         >
           {isLoading ? (
             <>
@@ -323,7 +323,7 @@ function AuthField({
         value={value}
         onChange={onChange}
         disabled={disabled}
-        className="h-10 rounded-md border-border bg-card text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+        className="auth-input h-10 rounded-lg border-border/80 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
       />
     </div>
   );
@@ -359,7 +359,7 @@ function PasswordField({
           value={value}
           onChange={onChange}
           disabled={disabled}
-          className="h-10 rounded-md border-border bg-card pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+          className="auth-input h-10 rounded-lg border-border/80 pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
         />
         <button
           type="button"

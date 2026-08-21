@@ -63,7 +63,7 @@ if [ ! -f ".env.local" ]; then
     
     echo -e "${YELLOW}Please edit .env.local with your production values:${NC}"
     echo "  - NEXT_PUBLIC_ALLOWED_HOSTS"
-    echo "  - NEXT_PUBLIC_BACKEND_URL"
+    echo "  - Backend URL is defined in code"
     echo "  - NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS (should be false)"
     echo "  - XAI_API_KEY (optional)"
     echo ""

@@ -108,9 +108,9 @@ async function main() {
   log.step('Step 5: Configure environment variables...');
   
   const grokKey = await prompt('Enter your Grok API key (or press Enter to skip): ');
-  const backendUrl = await prompt('Enter your backend URL (or press Enter for demo mode): ');
+  log.info('Backend URL is defined in code.');
 
-  if (grokKey || backendUrl) {
+  if (grokKey) {
     let envContent = readFileSync(envLocalPath, 'utf-8');
     
     if (grokKey) {
@@ -120,15 +120,7 @@ async function main() {
       );
       log.success('Grok API key configured');
     }
-    
-    if (backendUrl) {
-      envContent = envContent.replace(
-        'NEXT_PUBLIC_BACKEND_URL=',
-        `NEXT_PUBLIC_BACKEND_URL=${backendUrl}`
-      );
-      log.success('Backend URL configured');
-    }
-    
+
     writeFileSync(envLocalPath, envContent);
   }
 

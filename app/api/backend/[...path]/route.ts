@@ -1,7 +1,11 @@
 
 import { NextRequest } from "next/server";
 
-const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "https://invoicing.dimeconsultants.africa";
+const backendUrl = "https://stage-invoicing.dimeconsultants.africa/api";
+const getBackendApiBaseUrl = (url: string) => {
+  const trimmedUrl = url.replace(/\/$/, "");
+  return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
+};
 
 const HOP_BY_HOP_HEADERS = [
   "host",
@@ -19,7 +23,7 @@ const HOP_BY_HOP_HEADERS = [
 
 async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
   const { path } = await context.params;
-  const target = `${backendUrl.replace(/\/$/, "")}/api/${path.join("/")}/`;
+  const target = `${getBackendApiBaseUrl(backendUrl)}/${path.join("/")}/`;
   const headers = new Headers(request.headers);
   for (const h of HOP_BY_HOP_HEADERS) headers.delete(h);
 
