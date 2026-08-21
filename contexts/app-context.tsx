@@ -349,11 +349,13 @@ export function AppProvider({ children }: { children: ReactNode }) {
         const responseText = await response.text();
         let errorMessage = `Login failed (${response.status})`;
         let requiresEmailVerification = false;
+        let emailForVerification = email;
 
         try {
           const errorData = JSON.parse(responseText);
           const payload = errorData.error ?? errorData;
           requiresEmailVerification = Boolean(payload.requires_email_verification);
+          emailForVerification = payload.email || emailForVerification;
           const detail = payload.details;
           const fieldMessage = detail
             ? Object.values(detail).flat().find(Boolean)
@@ -369,8 +371,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
         if (requiresEmailVerification) {
           const error = new Error(String(errorMessage)) as Error & {
             requiresEmailVerification?: boolean;
+            email?: string;
           };
           error.requiresEmailVerification = true;
+          error.email = emailForVerification;
           throw error;
         }
         throw new Error(String(errorMessage));

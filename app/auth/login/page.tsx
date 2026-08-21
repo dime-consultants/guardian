@@ -15,12 +15,13 @@ import { useApp } from "@/contexts/app-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login, verifyLoginOtp } = useApp();
+  const { login, requestEmailOtp, verifyEmailOtp, verifyLoginOtp } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [otp, setOtp] = useState("");
   const [needsLoginOtp, setNeedsLoginOtp] = useState(false);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
@@ -30,6 +31,8 @@ export default function LoginPage() {
     event.preventDefault();
     setError("");
     setNotice("");
+    setNeedsEmailVerification(false);
+    setNeedsLoginOtp(false);
 
     try {
       setIsLoading(true);
@@ -46,7 +49,10 @@ export default function LoginPage() {
       router.push("/");
     } catch (err: any) {
       if (err.requiresEmailVerification) {
-        setError(err.message || "Please verify your email before logging in.");
+        setEmail(err.email || email);
+        setOtp("");
+        setNeedsEmailVerification(true);
+        setNotice(err.message || "Please verify your email before logging in.");
         return;
       }
       if (err.requiresLoginOtp) {
@@ -66,9 +72,22 @@ export default function LoginPage() {
     setNotice("");
     try {
       setIsLoading(true);
+      if (needsEmailVerification) {
+        await verifyEmailOtp(email, otp);
+        await login(email, password);
+        router.push("/");
+        return;
+      }
       await verifyLoginOtp(email, otp);
       router.push("/");
     } catch (err: any) {
+      if (err.requiresLoginOtp) {
+        setNeedsEmailVerification(false);
+        setNeedsLoginOtp(true);
+        setOtp("");
+        setNotice(err.message || "Enter the one-time code to continue.");
+        return;
+      }
       setError(err.message || "Verification failed. Please try again.");
     } finally {
       setIsLoading(false);
@@ -80,6 +99,12 @@ export default function LoginPage() {
     setNotice("");
     try {
       setIsLoading(true);
+      if (needsEmailVerification) {
+        await requestEmailOtp(email);
+        setOtp("");
+        setNotice("A new verification code is ready.");
+        return;
+      }
       await login(email, password);
       setOtp("");
     } catch (err: any) {
@@ -118,12 +143,14 @@ export default function LoginPage() {
         </div>
       )}
 
-      {needsLoginOtp ? (
+      {needsEmailVerification || needsLoginOtp ? (
         <div className="space-y-4">
           <div className="flex items-start gap-3 rounded-lg border border-border/80 bg-background/60 p-3">
             <ShieldCheck className="mt-0.5 size-4 text-primary" />
             <div className="space-y-1 text-[13px]">
-              <p className="font-medium text-foreground">Enter your login code</p>
+              <p className="font-medium text-foreground">
+                {needsEmailVerification ? "Verify your email" : "Enter your login code"}
+              </p>
               <p className="text-muted-foreground">
                 Enter the one-time code for {email}.
               </p>
@@ -132,7 +159,9 @@ export default function LoginPage() {
 
           <div className="space-y-1.5">
             <div className="flex items-center gap-1.5">
-              <Label className="text-[12px] text-foreground">Login OTP</Label>
+              <Label className="text-[12px] text-foreground">
+                {needsEmailVerification ? "Verification code" : "Login OTP"}
+              </Label>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <HelpCircle className="size-3.5 text-muted-foreground" />
@@ -158,7 +187,7 @@ export default function LoginPage() {
             className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            Verify OTP and login
+            {needsEmailVerification ? "Verify email and login" : "Verify OTP and login"}
           </Button>
           <Button
             type="button"
