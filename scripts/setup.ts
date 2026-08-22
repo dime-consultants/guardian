@@ -1,17 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * K+N Finance Automation Platform - Local Setup Script
- * 
- * This script helps set up the project locally by:
- * 1. Checking Node.js version
- * 2. Installing dependencies
- * 3. Creating .env.local from .env.example
- * 4. Providing setup instructions
- * 
- * Run with: npx ts-node scripts/setup.ts
- * Or: pnpm setup
- */
 
 import { execSync } from 'child_process';
 import { existsSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
