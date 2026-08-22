@@ -1,4 +1,4 @@
-name: Build Image & Trigger Deployment
+name: Build Image & Trigger K3s Deployment
 
 on:
   push:
@@ -22,13 +22,13 @@ jobs:
           if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
             ENV_NAME="prod"
             NODE_ENV="production"
-            API_PORT="3004"
-            COMPOSE_FILE="docker-compose.yml"
+            NEXT_PUBLIC_BACKEND_URL="https://invoicing.dimeconsultants.africa"
+            NEXT_PUBLIC_ALLOWED_HOSTS="guardian.dimeconsultants.africa"
           elif [[ "${{ github.ref_name }}" == "develop" ]]; then
             ENV_NAME="stage"
             NODE_ENV="production"
-            API_PORT="3005"
-            COMPOSE_FILE="docker-compose.yml"
+            NEXT_PUBLIC_BACKEND_URL="https://stage-invoicing.dimeconsultants.africa"
+            NEXT_PUBLIC_ALLOWED_HOSTS="stage-guardian.dimeconsultants.africa"
           else
             echo "Error: unsupported branch '${{ github.ref_name }}'"
             exit 1
@@ -39,21 +39,10 @@ jobs:
           TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${TIMESTAMP}"
 
-          # Validate compose file
-          if [ ! -f "$COMPOSE_FILE" ]; then
-            echo "Error: $COMPOSE_FILE not found"
-            exit 1
-          fi
-
-          # Encode compose file for repository dispatch payload
-          COMPOSE_B64=$(base64 -w 0 "$COMPOSE_FILE")
-
-          # Variables/secrets that the infrastructure deployment
-          # should expose before running docker compose.
+          # Variables that the infrastructure deployment should expose to the pod.
           declare -A secrets=(
             ["SHARED_ENV"]="$ENV_NAME"
             ["NODE_ENV"]="$NODE_ENV"
-            ["API_PORT"]="$API_PORT"
           )
 
           SECRETS_JSON="{}"
@@ -72,16 +61,16 @@ jobs:
           # GitHub Actions outputs
           echo "env=$ENV_NAME" >> "$GITHUB_OUTPUT"
           echo "node_env=$NODE_ENV" >> "$GITHUB_OUTPUT"
-          echo "compose_file=$COMPOSE_FILE" >> "$GITHUB_OUTPUT"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
-          echo "compose_b64=$COMPOSE_B64" >> "$GITHUB_OUTPUT"
           echo "secrets_json=$SECRETS_JSON" >> "$GITHUB_OUTPUT"
+          echo "next_public_backend_url=$NEXT_PUBLIC_BACKEND_URL" >> "$GITHUB_OUTPUT"
+          echo "next_public_allowed_hosts=$NEXT_PUBLIC_ALLOWED_HOSTS" >> "$GITHUB_OUTPUT"
 
           echo "Environment: $ENV_NAME"
           echo "NODE_ENV: $NODE_ENV"
-          echo "API_PORT: $API_PORT"
-          echo "Compose file: $COMPOSE_FILE"
           echo "Image tag: $IMAGE_TAG"
+          echo "Backend URL: $NEXT_PUBLIC_BACKEND_URL"
+          echo "Allowed hosts: $NEXT_PUBLIC_ALLOWED_HOSTS"
 
       # 3. Login, build, and push Docker image
       - name: 3. Build & Push Docker Image
@@ -98,6 +87,10 @@ jobs:
 
           docker build \
             --platform linux/amd64 \
+            --build-arg NEXT_PUBLIC_BACKEND_URL="${{ steps.prepare.outputs.next_public_backend_url }}" \
+            --build-arg NEXT_PUBLIC_ALLOWED_HOSTS="${{ steps.prepare.outputs.next_public_allowed_hosts }}" \
+            --build-arg NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=false \
+            --build-arg NEXT_PUBLIC_DEFAULT_DEMO_MODE=false \
             -t "$IMAGE_TAG" \
             .
 
@@ -118,6 +111,5 @@ jobs:
               "node_env": "${{ steps.prepare.outputs.node_env }}",
               "sha": "${{ github.sha }}",
               "image_tag": "${{ steps.prepare.outputs.image_tag }}",
-              "docker_compose_b64": "${{ steps.prepare.outputs.compose_b64 }}",
               "env_secrets": ${{ steps.prepare.outputs.secrets_json }}
             }
