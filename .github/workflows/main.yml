@@ -35,7 +35,7 @@ jobs:
           fi
 
           # Generate Docker image tag
-          IMAGE_NAME="qb-ui"
+          IMAGE_NAME="guardian-bank-ui"
           TIMESTAMP=$(date +"%Y-%m-%d_%H-%M-%S")
           IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${TIMESTAMP}"
 

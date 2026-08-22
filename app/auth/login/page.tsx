@@ -3,27 +3,36 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
-import { Eye, EyeOff, Loader2 } from "lucide-react";
+import { Eye, EyeOff, HelpCircle, Loader2, ShieldCheck } from "lucide-react";
 
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { useApp } from "@/contexts/app-context";
 
 export default function LoginPage() {
   const router = useRouter();
-  const { login } = useApp();
+  const { login, requestEmailOtp, verifyEmailOtp, verifyLoginOtp } = useApp();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [otp, setOtp] = useState("");
+  const [needsLoginOtp, setNeedsLoginOtp] = useState(false);
+  const [needsEmailVerification, setNeedsEmailVerification] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState("");
+  const [notice, setNotice] = useState("");
 
   const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault();
     setError("");
+    setNotice("");
+    setNeedsEmailVerification(false);
+    setNeedsLoginOtp(false);
 
     try {
       setIsLoading(true);
@@ -39,7 +48,72 @@ export default function LoginPage() {
       await login(email, password);
       router.push("/");
     } catch (err: any) {
+      if (err.requiresEmailVerification) {
+        setEmail(err.email || email);
+        setOtp("");
+        setNeedsEmailVerification(true);
+        setNotice(err.message || "Please verify your email before logging in.");
+        return;
+      }
+      if (err.requiresLoginOtp) {
+        setNeedsLoginOtp(true);
+        setOtp("");
+        setNotice(err.message || "Enter the one-time code to continue.");
+        return;
+      }
       setError(err.message || "Login failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleVerify = async () => {
+    setError("");
+    setNotice("");
+    try {
+      setIsLoading(true);
+      if (needsEmailVerification) {
+        await verifyEmailOtp(email, otp);
+        await login(email, password);
+        router.push("/");
+        return;
+      }
+      await verifyLoginOtp(email, otp);
+      router.push("/");
+    } catch (err: any) {
+      if (err.requiresLoginOtp) {
+        setNeedsEmailVerification(false);
+        setNeedsLoginOtp(true);
+        setOtp("");
+        setNotice(err.message || "Enter the one-time code to continue.");
+        return;
+      }
+      setError(err.message || "Verification failed. Please try again.");
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleResend = async () => {
+    setError("");
+    setNotice("");
+    try {
+      setIsLoading(true);
+      if (needsEmailVerification) {
+        await requestEmailOtp(email);
+        setOtp("");
+        setNotice("A new verification code is ready.");
+        return;
+      }
+      await login(email, password);
+      setOtp("");
+    } catch (err: any) {
+      if (err.requiresLoginOtp) {
+        setOtp("");
+        setNotice(err.message || "A new login code is ready.");
+        return;
+      }
+      setError(err.message || "Could not send a new code.");
     } finally {
       setIsLoading(false);
     }
@@ -59,11 +133,73 @@ export default function LoginPage() {
       }
     >
       {error && (
-        <div className="mb-4 rounded-md border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
+        <div className="mb-4 rounded-lg border border-destructive/20 bg-destructive/10 px-3 py-2 text-[13px] text-destructive">
           {error}
         </div>
       )}
+      {notice && (
+        <div className="mb-4 rounded-lg border border-primary/20 bg-primary/10 px-3 py-2 text-[13px] text-primary">
+          {notice}
+        </div>
+      )}
 
+      {needsEmailVerification || needsLoginOtp ? (
+        <div className="space-y-4">
+          <div className="flex items-start gap-3 rounded-lg border border-border/80 bg-background/60 p-3">
+            <ShieldCheck className="mt-0.5 size-4 text-primary" />
+            <div className="space-y-1 text-[13px]">
+              <p className="font-medium text-foreground">
+                {needsEmailVerification ? "Verify your email" : "Enter your login code"}
+              </p>
+              <p className="text-muted-foreground">
+                Enter the one-time code for {email}.
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-1.5">
+              <Label className="text-[12px] text-foreground">
+                {needsEmailVerification ? "Verification code" : "Login OTP"}
+              </Label>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <HelpCircle className="size-3.5 text-muted-foreground" />
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>The code expires shortly and can only be used once.</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
+            <InputOTP maxLength={6} value={otp} onChange={setOtp} disabled={isLoading}>
+              <InputOTPGroup>
+                {Array.from({ length: 6 }).map((_, index) => (
+                  <InputOTPSlot key={index} index={index} />
+                ))}
+              </InputOTPGroup>
+            </InputOTP>
+          </div>
+
+          <Button
+            type="button"
+            disabled={isLoading || otp.length < 5}
+            onClick={handleVerify}
+            className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
+          >
+            {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
+            {needsEmailVerification ? "Verify email and login" : "Verify OTP and login"}
+          </Button>
+          <Button
+            type="button"
+            variant="ghost"
+            disabled={isLoading}
+            onClick={handleResend}
+            className="h-9 w-full text-[13px]"
+          >
+            Send a new code
+          </Button>
+        </div>
+      ) : (
       <form onSubmit={handleSubmit} className="space-y-4">
         <div className="space-y-1.5">
           <Label htmlFor="email" className="text-[12px] text-foreground">
@@ -76,7 +212,7 @@ export default function LoginPage() {
             value={email}
             onChange={(event) => setEmail(event.target.value)}
             disabled={isLoading}
-            className="h-10 rounded-md border-border bg-card text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+            className="auth-input h-10 rounded-lg border-border/80 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
           />
         </div>
 
@@ -92,7 +228,7 @@ export default function LoginPage() {
               value={password}
               onChange={(event) => setPassword(event.target.value)}
               disabled={isLoading}
-              className="h-10 rounded-md border-border bg-card pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+              className="auth-input h-10 rounded-lg border-border/80 pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
             />
             <button
               type="button"
@@ -108,7 +244,7 @@ export default function LoginPage() {
             </button>
           </div>
           <div className="text-right">
-            <Link href="#" className="text-[12px] text-muted-foreground transition hover:text-primary">
+            <Link href="/auth/reset-password" className="text-[12px] text-muted-foreground transition hover:text-primary">
               Forgot password
             </Link>
           </div>
@@ -117,7 +253,7 @@ export default function LoginPage() {
         <Button
           type="submit"
           disabled={isLoading || !email || !password}
-          className="h-10 w-full rounded-md bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/90"
+          className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
         >
           {isLoading ? (
             <>
@@ -129,6 +265,7 @@ export default function LoginPage() {
           )}
         </Button>
       </form>
+      )}
     </AuthShell>
   );
 }

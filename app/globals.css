@@ -4,48 +4,49 @@
 @custom-variant dark (&:is(.dark *));
 
 :root {
-  --background: #F8F9FB;
-  --foreground: #1E293B;
-  --card: #FFFFFF;
-  --card-foreground: #1E293B;
-  --popover: #FFFFFF;
-  --popover-foreground: #1E293B;
-  --primary: #0D3B8E;
+  --background: #F6F5F1;
+  --foreground: #182230;
+  --card: #FFFEFB;
+  --card-foreground: #182230;
+  --popover: #FFFEFB;
+  --popover-foreground: #182230;
+  --primary: #163B66;
   --primary-foreground: #FFFFFF;
-  --secondary: #EEF2F7;
-  --secondary-foreground: #0D3B8E;
-  --muted: #F1F5F9;
-  --muted-foreground: #64748B;
-  --accent: #DCE8F8;
-  --accent-foreground: #0D3B8E;
-  --destructive: #D45757;
+  --secondary: #EDEAE3;
+  --secondary-foreground: #24364A;
+  --muted: #ECE9E1;
+  --muted-foreground: #707784;
+  --accent: #E5EDF3;
+  --accent-foreground: #183A5E;
+  --destructive: #B95A54;
   --destructive-foreground: #FFFFFF;
-  --border: #E2E8F0;
-  --input: #FFFFFF;
-  --ring: #0D3B8E;
-  --chart-1: #0D3B8E;
-  --chart-2: #1F5FBF;
-  --chart-3: #C8A248;
-  --chart-4: #64748B;
-  --chart-5: #D45757;
+  --border: #DDD8CD;
+  --input: #FDFBF7;
+  --ring: #2F5F8B;
+  --chart-1: #173D67;
+  --chart-2: #6B879C;
+  --chart-3: #B99A5D;
+  --chart-4: #71806E;
+  --chart-5: #B95A54;
   --radius: 0.5rem;
-  --sidebar: #FFFFFF;
-  --sidebar-foreground: #1E293B;
-  --sidebar-primary: #0D3B8E;
+  --sidebar: #FBFAF6;
+  --sidebar-foreground: #253343;
+  --sidebar-primary: #173D67;
   --sidebar-primary-foreground: #FFFFFF;
-  --sidebar-accent: #EEF2F7;
-  --sidebar-accent-foreground: #0D3B8E;
-  --sidebar-border: #E2E8F0;
-  --sidebar-ring: #0D3B8E;
-  --brand-accent: #C8A248;
-  --brand-accent-foreground: #FFFFFF;
-  --success: #26946F;
+  --sidebar-accent: #ECE8DF;
+  --sidebar-accent-foreground: #173D67;
+  --sidebar-border: #DED9CF;
+  --sidebar-ring: #2F5F8B;
+  --brand-accent: #B89452;
+  --brand-accent-foreground: #1F2933;
+  --success: #477A63;
   --success-foreground: #FFFFFF;
-  --warning: #B98218;
-  --warning-foreground: #1E293B;
-  --error: #D45757;
+  --warning: #A77B33;
+  --warning-foreground: #1F2933;
+  --error: #B95A54;
   --error-foreground: #FFFFFF;
-  --shadow-soft: 0 10px 28px rgba(15, 23, 42, 0.07);
+  --shadow-soft: 0 14px 36px rgba(32, 42, 56, 0.08);
+  --shadow-card: 0 1px 1px rgba(24, 34, 48, 0.03), 0 14px 34px rgba(24, 34, 48, 0.07);
 }
 
 .dark {
@@ -93,7 +94,7 @@
 }
 
 @theme inline {
-  --font-sans: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --font-sans: Inter, system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --font-mono: 'SFMono-Regular', Consolas, 'Liberation Mono', monospace;
   --color-background: var(--background);
   --color-foreground: var(--foreground);
@@ -155,6 +156,10 @@
   }
   body {
     @apply bg-background text-foreground;
+    font-feature-settings: 'cv02', 'cv03', 'cv04', 'tnum';
+    text-rendering: optimizeLegibility;
+    background:
+      linear-gradient(180deg, color-mix(in srgb, var(--background) 92%, white) 0%, var(--background) 46%, color-mix(in srgb, var(--background) 88%, #d9d1c3) 100%);
   }
 }
 
@@ -263,46 +268,64 @@
 .auth-scroll {
   scroll-behavior: smooth;
   scrollbar-width: thin;
-  scrollbar-color: var(--primary) transparent;
+  scrollbar-color: color-mix(in srgb, var(--primary) 38%, transparent) transparent;
 }
 .auth-scroll::-webkit-scrollbar {
-  width: 8px;
+  width: 5px;
 }
 .auth-scroll::-webkit-scrollbar-track {
   background: transparent;
 }
 .auth-scroll::-webkit-scrollbar-thumb {
-  background-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 38%, transparent);
   border-radius: 9999px;
 }
 .auth-scroll::-webkit-scrollbar-thumb:hover {
-  background-color: var(--primary);
+  background-color: color-mix(in srgb, var(--primary) 54%, transparent);
   border-radius: 9999px;
 }
 
 .auth-gradient {
   background:
-    radial-gradient(circle at 24% 12%, color-mix(in srgb, var(--primary) 8%, transparent), transparent 30%),
-    radial-gradient(circle at 76% 18%, color-mix(in srgb, var(--brand-accent) 12%, transparent), transparent 34%),
-    linear-gradient(180deg, var(--card) 0%, var(--background) 42%, var(--card) 100%);
+    radial-gradient(circle at 18% 14%, rgba(255, 255, 255, 0.86), transparent 28%),
+    radial-gradient(circle at 86% 12%, color-mix(in srgb, var(--brand-accent) 12%, transparent), transparent 34%),
+    linear-gradient(145deg, #fbfaf6 0%, #f3f0e8 45%, #faf8f2 100%);
+}
+
+.auth-panel {
+  box-shadow: var(--shadow-card);
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.9), rgba(255,255,255,0.72)),
+    color-mix(in srgb, var(--card) 94%, transparent);
+}
+
+.auth-input {
+  background:
+    linear-gradient(180deg, rgba(255,255,255,0.74), rgba(255,255,255,0.48)),
+    var(--input);
+}
+
+.bank-card-surface {
+  box-shadow: var(--shadow-card);
 }
 
 .auth-visual {
   background:
-    radial-gradient(circle at 57% 78%, color-mix(in srgb, var(--primary) 9%, transparent), transparent 18%),
-    linear-gradient(180deg, color-mix(in srgb, var(--card) 94%, transparent) 0%, color-mix(in srgb, var(--background) 82%, transparent) 52%, var(--card) 100%);
+    radial-gradient(circle at 64% 24%, rgba(255, 255, 255, 0.72), transparent 22%),
+    radial-gradient(circle at 62% 75%, color-mix(in srgb, var(--primary) 10%, transparent), transparent 28%),
+    linear-gradient(145deg, #f9f7f0 0%, #eeeae0 48%, #faf9f5 100%);
 }
 
 .auth-grid-plane {
   position: absolute;
-  inset: -10% -28% 0 -8%;
-  transform: perspective(760px) rotateX(64deg) rotateZ(-1deg);
+  inset: -7% -22% 0 -10%;
+  transform: perspective(820px) rotateX(62deg) rotateZ(-2deg);
   transform-origin: top center;
   background-image:
-    linear-gradient(rgba(148, 163, 184, 0.18) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(148, 163, 184, 0.18) 1px, transparent 1px);
-  background-size: 76px 76px;
-  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.78) 52%, transparent 91%);
+    linear-gradient(rgba(123, 119, 109, 0.16) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(123, 119, 109, 0.16) 1px, transparent 1px);
+  background-size: 64px 64px;
+  mask-image: linear-gradient(180deg, #000 0%, rgba(0, 0, 0, 0.74) 54%, transparent 90%);
 }
 
 .auth-visual::before {
@@ -310,8 +333,8 @@
   position: absolute;
   inset: 0;
   background:
-    linear-gradient(90deg, rgba(255,255,255,0.84), transparent 18%, transparent 82%, rgba(255,255,255,0.92)),
-    linear-gradient(180deg, rgba(255,255,255,0.48), transparent 46%, rgba(255,255,255,0.9));
+    linear-gradient(90deg, rgba(250,249,245,0.92), transparent 17%, transparent 78%, rgba(250,249,245,0.9)),
+    linear-gradient(180deg, rgba(250,249,245,0.42), transparent 48%, rgba(250,249,245,0.9));
   pointer-events: none;
 }
 
@@ -322,7 +345,7 @@
   top: 40%;
   height: 40%;
   width: 1px;
-  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--primary) 34%, transparent), color-mix(in srgb, var(--brand-accent) 24%, transparent), transparent);
+  background: linear-gradient(180deg, transparent, color-mix(in srgb, var(--primary) 24%, transparent), color-mix(in srgb, var(--brand-accent) 18%, transparent), transparent);
 }
 
 .auth-pulse {

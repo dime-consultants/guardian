@@ -122,7 +122,10 @@ export function Sidebar({
 
   const getNavStyle = (href: string, isActive: boolean) => {
     if (isActive) {
-      return { backgroundColor: "var(--sidebar-primary)", color: "var(--sidebar-primary-foreground)" };
+      return {
+        backgroundColor: "color-mix(in srgb, var(--sidebar-primary) 12%, transparent)",
+        color: "var(--sidebar-primary)",
+      };
     }
     if (hoveredHref === href) {
       return { backgroundColor: "var(--sidebar-accent)", color: "var(--sidebar-accent-foreground)" };
@@ -132,7 +135,7 @@ export function Sidebar({
 
   const getIconStyle = (href: string, isActive: boolean) => {
     if (isActive) {
-      return { color: "var(--sidebar-primary-foreground)" };
+      return { color: "var(--sidebar-primary)" };
     }
     if (hoveredHref === href) {
       return { color: "var(--sidebar-accent-foreground)" };
@@ -144,13 +147,13 @@ export function Sidebar({
     <TooltipProvider delayDuration={0}>
       <aside
         className={cn(
-          "fixed left-0 top-0 z-40 h-[100dvh] border-r border-sidebar-border transition-transform duration-300 flex flex-col bg-sidebar text-sidebar-foreground",
+          "fixed left-0 top-0 z-40 h-[100dvh] border-r border-sidebar-border transition-transform duration-300 flex flex-col bg-sidebar/94 text-sidebar-foreground shadow-[8px_0_30px_rgba(24,34,48,0.04)] backdrop-blur-xl",
           collapsed ? "w-16" : "w-64",
           !mobileOpen && "sidebar-hidden-mobile",
         )}
       >
         {/* Logo */}
-        <div className="flex items-center h-16 px-4 border-b border-border">
+        <div className="flex items-center h-16 px-4 border-b border-sidebar-border/80">
           <Link href="/" className="flex items-center" onClick={onMobileClose}>
             <KNLogo showText={!collapsed} />
           </Link>
@@ -169,11 +172,11 @@ export function Sidebar({
                 onMouseEnter={() => setHoveredHref(item.href)}
                 onMouseLeave={() => setHoveredHref(null)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors group",
                 )}
                 style={getNavStyle(item.href, isActive)}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" style={getIconStyle(item.href, isActive)} />
+                <Icon className="h-[18px] w-[18px] flex-shrink-0" style={getIconStyle(item.href, isActive)} />
                 {!collapsed && (
                   <span className="text-sm font-medium">{item.name}</span>
                 )}
@@ -201,7 +204,7 @@ export function Sidebar({
         </nav>
 
         {/* Bottom Navigation */}
-        <div className="px-2 py-4 border-t border-sidebar-border space-y-1">
+        <div className="px-2 py-4 border-t border-sidebar-border/80 space-y-1">
           {bottomNavigation.map((item) => {
             const isActive = pathname === item.href;
             const Icon = item.icon as NavIcon;
@@ -213,11 +216,11 @@ export function Sidebar({
                 onMouseEnter={() => setHoveredHref(item.href)}
                 onMouseLeave={() => setHoveredHref(null)}
                 className={cn(
-                  "flex items-center gap-3 px-3 py-2.5 rounded-lg transition-colors group",
+                  "flex items-center gap-3 rounded-lg px-3 py-2.5 transition-colors group",
                 )}
                 style={getNavStyle(item.href, isActive)}
               >
-                <Icon className="h-5 w-5 flex-shrink-0" style={getIconStyle(item.href, isActive)} />
+                <Icon className="h-[18px] w-[18px] flex-shrink-0" style={getIconStyle(item.href, isActive)} />
                 {!collapsed && (
                   <span className="text-sm font-medium">{item.name}</span>
                 )}
@@ -243,7 +246,7 @@ export function Sidebar({
         <Button
           variant="ghost"
           size="icon"
-          className="absolute -right-3 top-20 h-6 w-6 rounded-full border shadow-sm hover:bg-sidebar-accent hidden md:flex border-sidebar-border bg-sidebar text-sidebar-foreground"
+          className="absolute -right-3 top-20 hidden h-6 w-6 rounded-full border border-sidebar-border bg-sidebar text-sidebar-foreground shadow-sm hover:bg-sidebar-accent md:flex"
           onClick={() => onCollapsedChange(!collapsed)}
         >
           {collapsed ? (
@@ -266,7 +269,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
   const { demoMode, setDemoMode, backendConnected } = useApp();
 
   return (
-    <header className="flex-shrink-0 z-30 h-16 bg-background border-b border-border flex items-center justify-between px-4 md:px-6">
+    <header className="z-30 flex h-16 flex-shrink-0 items-center justify-between border-b border-border/80 bg-background/75 px-4 backdrop-blur-xl md:px-6">
       <div className="flex items-center gap-2 md:gap-4">
         {/* Mobile hamburger */}
         <Button
@@ -279,7 +282,7 @@ export function Header({ onMobileMenuToggle }: HeaderProps) {
         </Button>
         {/* Logo icon on mobile — full title too wide for phone header */}
         <KNLogo showText={false} size="sm" className="md:hidden" />
-        <h1 className="hidden md:block text-lg font-semibold text-foreground">
+        <h1 className="hidden text-[17px] font-semibold text-foreground md:block">
           Guardian Financial Tool
         </h1>
       </div>

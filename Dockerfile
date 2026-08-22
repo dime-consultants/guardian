@@ -22,6 +22,9 @@ RUN yarn build
 # Production stage
 FROM base AS runner
 WORKDIR /app
+ENV HOME=/home/node
+ENV COREPACK_HOME=/home/node/.cache/node/corepack
+ENV NEXT_TELEMETRY_DISABLED=1
 
 # Copy everything from builder; no second install at all
 COPY --from=builder /app/node_modules ./node_modules
@@ -29,10 +32,10 @@ COPY --from=builder /app/.next ./.next
 COPY --from=builder /app/public ./public
 COPY --from=builder /app/package.json ./package.json
 
-RUN addgroup -g 1001 -S nodejs && \
-    adduser -S nextjs -u 1001
-USER nextjs
+RUN mkdir -p /home/node/.cache/node/corepack /app/.next/cache && \
+    chown -R node:node /app /home/node
+USER node
 EXPOSE 3000
 HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
     CMD wget --no-verbose --tries=1 --spider http://localhost:${PORT:-3000}/health || exit 1
-CMD ["yarn", "start"]
+CMD ["sh", "-c", "node_modules/.bin/next start -p ${PORT:-3000}"]

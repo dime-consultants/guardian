@@ -74,7 +74,7 @@ import { toast } from "sonner";
 
 // Types
 interface User {
-  id: number;
+  id: string;
   username: string;
   email: string;
   first_name: string;
@@ -87,7 +87,7 @@ interface User {
   date_joined: string;
   is_superuser?: boolean;
   is_staff?: boolean;
-  organization?: number | null;
+  organization?: string | null;
   organization_name?: string | null;
 }
 

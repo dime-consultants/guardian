@@ -6,9 +6,6 @@ export interface ApiRequestOptions extends RequestInit {
   token?: string;
 }
 
-/**
- * Make an authenticated API request with JWT token
- */
 export async function apiRequest<T = any>(
   url: string,
   options: ApiRequestOptions = {}

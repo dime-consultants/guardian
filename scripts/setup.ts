@@ -1,17 +1,5 @@
 #!/usr/bin/env node
 
-/**
- * K+N Finance Automation Platform - Local Setup Script
- * 
- * This script helps set up the project locally by:
- * 1. Checking Node.js version
- * 2. Installing dependencies
- * 3. Creating .env.local from .env.example
- * 4. Providing setup instructions
- * 
- * Run with: npx ts-node scripts/setup.ts
- * Or: pnpm setup
- */
 
 import { execSync } from 'child_process';
 import { existsSync, copyFileSync, readFileSync, writeFileSync } from 'fs';
@@ -108,9 +96,9 @@ async function main() {
   log.step('Step 5: Configure environment variables...');
   
   const grokKey = await prompt('Enter your Grok API key (or press Enter to skip): ');
-  const backendUrl = await prompt('Enter your backend URL (or press Enter for demo mode): ');
+  log.info('Backend URL is defined in code.');
 
-  if (grokKey || backendUrl) {
+  if (grokKey) {
     let envContent = readFileSync(envLocalPath, 'utf-8');
     
     if (grokKey) {
@@ -120,15 +108,7 @@ async function main() {
       );
       log.success('Grok API key configured');
     }
-    
-    if (backendUrl) {
-      envContent = envContent.replace(
-        'NEXT_PUBLIC_BACKEND_URL=',
-        `NEXT_PUBLIC_BACKEND_URL=${backendUrl}`
-      );
-      log.success('Backend URL configured');
-    }
-    
+
     writeFileSync(envLocalPath, envContent);
   }
 

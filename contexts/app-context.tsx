@@ -2,7 +2,6 @@
 
 declare const process: {
   env: {
-    NEXT_PUBLIC_BACKEND_URL?: string;
     NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS?: string;
   };
 };
@@ -27,7 +26,7 @@ interface User {
   last_name?: string;
   department?: string;
   phone?: string;
-  organization?: number | null;
+  organization?: string | null;
   organization_name?: string | null;
 }
 
@@ -54,7 +53,12 @@ interface AppContextType {
   isAuthenticated: boolean;
   accessToken: string | null;
   login: (email: string, password: string) => Promise<void>;
+  verifyLoginOtp: (email: string, code: string) => Promise<void>;
   signup: (payload: SignupPayload) => Promise<void>;
+  requestEmailOtp: (email: string) => Promise<string>;
+  verifyEmailOtp: (email: string, code: string) => Promise<void>;
+  requestPasswordReset: (email: string) => Promise<string>;
+  confirmPasswordReset: (email: string, code: string, password: string) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
@@ -77,6 +81,11 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+const DEFAULT_BACKEND_URL = "https://stage-invoicing.dimeconsultants.africa/api";
+const getBackendApiBaseUrl = (url: string) => {
+  const trimmedUrl = url.replace(/\/$/, "");
+  return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
+};
 
 export function AppProvider({ children }: { children: ReactNode }) {
   const [user, setUserState] = useState<User | null>(null);
@@ -92,18 +101,20 @@ export function AppProvider({ children }: { children: ReactNode }) {
   };
   const [demoMode, setDemoMode] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
-  const [backendUrl, setBackendUrl] = useState(
-    process.env.NEXT_PUBLIC_BACKEND_URL ||
-      "https://invoicing.dimeconsultants.africa",
-  );
+  const [backendUrl, setBackendUrlState] = useState(DEFAULT_BACKEND_URL);
+  const setBackendUrl = (_value: string) => {
+    setBackendUrlState(DEFAULT_BACKEND_URL);
+  };
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Keep browser requests same-origin so preview and production do not depend on
   // the backend allowing every deployment origin through CORS.
-  const apiUrl = (path: string) =>
-    typeof window === "undefined"
-      ? `${backendUrl}/api/${path}`
-      : `/api/backend/${path}`;
+  const apiUrl = (path: string) => {
+    const cleanPath = path.replace(/^\/+|\/+$/g, "");
+    const apiBaseUrl = getBackendApiBaseUrl(backendUrl);
+
+    return `${apiBaseUrl}/${cleanPath}/`;
+  };
 
   // Return the token as well as storing it so callers can use it before React re-renders.
   const refreshToken = async (): Promise<string | null> => {
@@ -337,10 +348,14 @@ export function AppProvider({ children }: { children: ReactNode }) {
       if (!response.ok) {
         const responseText = await response.text();
         let errorMessage = `Login failed (${response.status})`;
+        let requiresEmailVerification = false;
+        let emailForVerification = email;
 
         try {
           const errorData = JSON.parse(responseText);
           const payload = errorData.error ?? errorData;
+          requiresEmailVerification = Boolean(payload.requires_email_verification);
+          emailForVerification = payload.email || emailForVerification;
           const detail = payload.details;
           const fieldMessage = detail
             ? Object.values(detail).flat().find(Boolean)
@@ -353,10 +368,27 @@ export function AppProvider({ children }: { children: ReactNode }) {
           }
         }
 
+        if (requiresEmailVerification) {
+          const error = new Error(String(errorMessage)) as Error & {
+            requiresEmailVerification?: boolean;
+            email?: string;
+          };
+          error.requiresEmailVerification = true;
+          error.email = emailForVerification;
+          throw error;
+        }
         throw new Error(String(errorMessage));
       }
 
       const data = await response.json();
+      if (data.requires_otp) {
+        const error = new Error(data.message || "Enter the login code sent to your email.") as Error & {
+          requiresLoginOtp?: boolean;
+        };
+        error.requiresLoginOtp = true;
+        throw error;
+      }
+
       console.log("✅ Login successful");
 
       let loginToken =
@@ -387,6 +419,35 @@ export function AppProvider({ children }: { children: ReactNode }) {
     }
   };
 
+  const verifyLoginOtp = async (email: string, code: string) => {
+    const response = await authFetch("login/verify-otp/", {
+      method: "POST",
+      body: { email, code },
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Invalid login code.");
+    }
+
+    const data = await response.json();
+    const loginToken =
+      data.access ??
+      data.access_token ??
+      data.token ??
+      data.tokens?.access ??
+      null;
+
+    if (loginToken) {
+      setAccessToken(loginToken);
+    }
+    if (data.user) {
+      setUserState(data.user);
+      setIsAuthenticated(true);
+    }
+    await fetchUserProfile(undefined, loginToken);
+  };
+
   // Signup function
   const signup = async (payload: SignupPayload) => {
     try {
@@ -402,10 +463,64 @@ export function AppProvider({ children }: { children: ReactNode }) {
         );
       }
 
-      await login(payload.email, payload.password);
+      return;
     } catch (error) {
       console.error("Signup error:", error);
       throw error;
+    }
+  };
+
+  const requestEmailOtp = async (email: string) => {
+    const response = await authFetch("email-otp/request/", {
+      method: "POST",
+      body: { email },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Could not send verification code.");
+    }
+    const data = await response.json().catch(() => ({}));
+    return data.message || "Verification code ready.";
+  };
+
+  const verifyEmailOtp = async (email: string, code: string) => {
+    const response = await authFetch("email-otp/verify/", {
+      method: "POST",
+      body: { email, code },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Invalid verification code.");
+    }
+  };
+
+  const requestPasswordReset = async (email: string) => {
+    const response = await authFetch("password-reset/request/", {
+      method: "POST",
+      body: { email },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.detail || "Could not send reset code.");
+    }
+    const data = await response.json().catch(() => ({}));
+    return data.message || "Reset code ready.";
+  };
+
+  const confirmPasswordReset = async (
+    email: string,
+    code: string,
+    password: string,
+  ) => {
+    const response = await authFetch("password-reset/confirm/", {
+      method: "POST",
+      body: { email, code, password },
+    });
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(
+        errorData.detail || errorData.password?.[0] || "Could not reset password.",
+      );
     }
   };
 
@@ -440,16 +555,10 @@ export function AppProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     const initializeAuth = async () => {
       const savedDemoMode = localStorage.getItem("kn-demo-mode");
-      const savedBackendUrl = localStorage.getItem("kn-backend-url");
+      localStorage.removeItem("kn-backend-url");
 
       if (savedDemoMode !== null) {
         setDemoMode(savedDemoMode === "true");
-      }
-      if (
-        savedBackendUrl &&
-        savedBackendUrl !== "https://invoicing.dimeconsultants.africa"
-      ) {
-        setBackendUrl(savedBackendUrl);
       }
 
       if (savedDemoMode === "true") {
@@ -490,10 +599,6 @@ export function AppProvider({ children }: { children: ReactNode }) {
       });
     }
   }, [demoMode, isAuthenticated]);
-
-  useEffect(() => {
-    localStorage.setItem("kn-backend-url", backendUrl);
-  }, [backendUrl]);
 
   // Check backend connection
   useEffect(() => {
@@ -543,7 +648,12 @@ export function AppProvider({ children }: { children: ReactNode }) {
         isAuthenticated,
         accessToken,
         login,
+        verifyLoginOtp,
         signup,
+        requestEmailOtp,
+        verifyEmailOtp,
+        requestPasswordReset,
+        confirmPasswordReset,
         logout,
         setUser,
         fetchUserProfile,
