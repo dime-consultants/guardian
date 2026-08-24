@@ -129,8 +129,7 @@ const getFileColor = (file: File) => {
   const n = file.name;
   if (n.match(/\.(xlsx|xls|csv)$/i))
     return "border-green-500/30 bg-green-50 dark:bg-green-950/20";
-  if (n.match(/\.pdf$/i))
-    return "border-destructive/30 bg-destructive/10";
+  if (n.match(/\.pdf$/i)) return "border-destructive/30 bg-destructive/10";
   if (n.match(/\.json$/i))
     return "border-yellow-500/30 bg-yellow-50 dark:bg-yellow-950/20";
   if (n.match(/\.txt$/i))
@@ -863,7 +862,9 @@ export function ChatPage() {
           return;
         }
         const turnId = data.turnId ?? data.turn_id;
-        const pending = turnId ? pendingTurnsRef.current.get(turnId) : undefined;
+        const pending = turnId
+          ? pendingTurnsRef.current.get(turnId)
+          : undefined;
         if (!pending) return;
 
         if (data.type === "done") {
@@ -872,7 +873,9 @@ export function ChatPage() {
             attachments: data.attachments ?? [],
           });
         } else if (data.type === "error") {
-          pending.reject(new Error(data.message || "The assistant turn failed."));
+          pending.reject(
+            new Error(data.message || "The assistant turn failed."),
+          );
         } else if (data.type === "cancelled") {
           pending.reject(new Error("Turn cancelled."));
         }
@@ -1013,10 +1016,10 @@ export function ChatPage() {
       for (const f of files) formData.append("files", f);
 
       const sentAt = Date.now();
-      const res = await apiFetch(
-        `chat/conversations/${convId}/send/?async=1`,
-        { method: "POST", body: formData },
-      );
+      const res = await apiFetch(`chat/conversations/${convId}/send/?async=1`, {
+        method: "POST",
+        body: formData,
+      });
 
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
@@ -1026,12 +1029,14 @@ export function ChatPage() {
       }
 
       const data = await res.json();
-      const userAttachments: Attachment[] = data.user_message?.attachments ?? [];
+      const userAttachments: Attachment[] =
+        data.user_message?.attachments ?? [];
 
       if (!data.turn_id) {
         // Defensive — the async endpoint should always return a turn_id.
         throw new Error(
-          data.error ?? "The server accepted the message but gave no turn to track.",
+          data.error ??
+            "The server accepted the message but gave no turn to track.",
         );
       }
 
@@ -1073,7 +1078,13 @@ export function ChatPage() {
 
       return { assistant, userAttachments };
     },
-    [backendConnected, apiFetch, createNewConversation, connectChatSocket, waitForAssistantReply],
+    [
+      backendConnected,
+      apiFetch,
+      createNewConversation,
+      connectChatSocket,
+      waitForAssistantReply,
+    ],
   );
 
   // ── Download attachment ────────────────────────────────────────────────────
@@ -1989,7 +2000,10 @@ export function ChatPage() {
           )}
 
           <div className="border-t border-border/50 p-3 md:p-6 flex-shrink-0">
-            <form onSubmit={handleSubmit} className="flex items-center gap-2 md:gap-3">
+            <form
+              onSubmit={handleSubmit}
+              className="flex items-center gap-2 md:gap-3"
+            >
               <input
                 type="file"
                 ref={fileInputRef}
@@ -2095,7 +2109,9 @@ export function ChatPage() {
                 <Loader2 className="h-5 w-5 animate-spin inline" />
               </div>
             ) : filteredConversations.length === 0 ? (
-              <p className="text-xs text-muted-foreground text-center py-8">No conversations yet</p>
+              <p className="text-xs text-muted-foreground text-center py-8">
+                No conversations yet
+              </p>
             ) : (
               filteredConversations.map((conv) => (
                 <div

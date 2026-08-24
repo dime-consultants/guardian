@@ -132,8 +132,13 @@ let memoryState: State = { toasts: [] }
 
 function dispatch(action: Action) {
   memoryState = reducer(memoryState, action)
-  listeners.forEach((listener) => {
-    listener(memoryState)
+  // Deferred to a microtask: notifying listeners synchronously can land mid-render
+  // of an unrelated component (e.g. a toast's onOpenChange firing during another
+  // component's commit), which React flags as an invalid cross-component update.
+  queueMicrotask(() => {
+    listeners.forEach((listener) => {
+      listener(memoryState)
+    })
   })
 }
 

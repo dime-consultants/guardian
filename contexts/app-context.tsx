@@ -3,6 +3,7 @@
 declare const process: {
   env: {
     NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS?: string;
+    NEXT_PUBLIC_BACKEND_URL?: string;
   };
 };
 
@@ -58,7 +59,11 @@ interface AppContextType {
   requestEmailOtp: (email: string) => Promise<string>;
   verifyEmailOtp: (email: string, code: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<string>;
-  confirmPasswordReset: (email: string, code: string, password: string) => Promise<void>;
+  confirmPasswordReset: (
+    email: string,
+    code: string,
+    password: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
@@ -81,7 +86,8 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-const DEFAULT_BACKEND_URL = "https://stage-invoicing.dimeconsultants.africa/api";
+const DEFAULT_BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stage-invoicing.dimeconsultants.africa/api";
 const getBackendApiBaseUrl = (url: string) => {
   const trimmedUrl = url.replace(/\/$/, "");
   return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
@@ -102,8 +108,8 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [demoMode, setDemoMode] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
   const [backendUrl, setBackendUrlState] = useState(DEFAULT_BACKEND_URL);
-  const setBackendUrl = (_value: string) => {
-    setBackendUrlState(DEFAULT_BACKEND_URL);
+  const setBackendUrl = (value: string) => {
+    setBackendUrlState(value);
   };
   const [isInitializing, setIsInitializing] = useState(true);
 
@@ -354,7 +360,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         try {
           const errorData = JSON.parse(responseText);
           const payload = errorData.error ?? errorData;
-          requiresEmailVerification = Boolean(payload.requires_email_verification);
+          requiresEmailVerification = Boolean(
+            payload.requires_email_verification,
+          );
           emailForVerification = payload.email || emailForVerification;
           const detail = payload.details;
           const fieldMessage = detail
@@ -382,7 +390,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       if (data.requires_otp) {
-        const error = new Error(data.message || "Enter the login code sent to your email.") as Error & {
+        const error = new Error(
+          data.message || "Enter the login code sent to your email.",
+        ) as Error & {
           requiresLoginOtp?: boolean;
         };
         error.requiresLoginOtp = true;
@@ -519,7 +529,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.detail || errorData.password?.[0] || "Could not reset password.",
+        errorData.detail ||
+          errorData.password?.[0] ||
+          "Could not reset password.",
       );
     }
   };
