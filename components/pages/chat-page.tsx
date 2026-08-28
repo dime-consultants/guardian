@@ -305,7 +305,10 @@ const purgeDemoMsgs = (id: string) => {
 // tab is still waiting, so this is a client-side patience budget, not a
 // server-side deadline. See chat/views.py:_run_turn_via_worker on the
 // backend for the matching bounded-wait/WS-handoff design.
-const CHAT_TURN_TIMEOUT_MS = 120_000;
+// Matches settings.CHAT_SYNC_RESULT_TIMEOUT (360s) and nginx's proxy_read_timeout
+// (370s) for the chat send endpoint — turns with several tool-call round trips
+// routinely take 2+ minutes, past the old 120s budget here.
+const CHAT_TURN_TIMEOUT_MS = 360_000;
 const CHAT_POLL_INTERVAL_MS = 3_000;
 
 /** Thrown by waitForAssistantReply on the client-side patience budget

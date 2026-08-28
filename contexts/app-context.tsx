@@ -87,7 +87,7 @@ interface AppContextType {
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
 const DEFAULT_BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "https://stage-invoicing.dimeconsultants.africa/api";
+  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api";
 const getBackendApiBaseUrl = (url: string) => {
   const trimmedUrl = url.replace(/\/$/, "");
   return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
@@ -116,10 +116,16 @@ export function AppProvider({ children }: { children: ReactNode }) {
   // Keep browser requests same-origin so preview and production do not depend on
   // the backend allowing every deployment origin through CORS.
   const apiUrl = (path: string) => {
-    const cleanPath = path.replace(/^\/+|\/+$/g, "");
+    // Split off the query string first — the trailing slash Django's routes
+    // require belongs after the path, not after the query string. Appending
+    // it to the whole string (old behavior) turned "?async=1" into "?async=1/",
+    // silently corrupting the last query param's value.
+    const [rawPath, queryString] = path.split("?");
+    const cleanPath = rawPath.replace(/^\/+|\/+$/g, "");
     const apiBaseUrl = getBackendApiBaseUrl(backendUrl);
+    const base = `${apiBaseUrl}/${cleanPath}/`;
 
-    return `${apiBaseUrl}/${cleanPath}/`;
+    return queryString ? `${base}?${queryString}` : base;
   };
 
   // Return the token as well as storing it so callers can use it before React re-renders.
