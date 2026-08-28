@@ -3,6 +3,8 @@
 declare const process: {
   env: {
     NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS?: string;
+    NEXT_PUBLIC_BACKEND_URL?: string;
+    NEXT_PUBLIC_APP_ENV?: string;
   };
 };
 
@@ -58,7 +60,11 @@ interface AppContextType {
   requestEmailOtp: (email: string) => Promise<string>;
   verifyEmailOtp: (email: string, code: string) => Promise<void>;
   requestPasswordReset: (email: string) => Promise<string>;
-  confirmPasswordReset: (email: string, code: string, password: string) => Promise<void>;
+  confirmPasswordReset: (
+    email: string,
+    code: string,
+    password: string,
+  ) => Promise<void>;
   logout: () => Promise<void>;
   setUser: (user: User | null) => void;
   fetchUserProfile: () => Promise<void>;
@@ -81,7 +87,23 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
-const DEFAULT_BACKEND_URL = "https://stage-invoicing.dimeconsultants.africa/api";
+
+// The two real backend deployments.
+const STAGE_BACKEND_URL = "https://stage-invoicing.dimeconsultants.africa/api";
+const PROD_BACKEND_URL = "https://invoicing.dimeconsultants.africa/api";
+
+// Selection order:
+//   1. NEXT_PUBLIC_BACKEND_URL — explicit full-URL override, wins outright.
+//   2. NEXT_PUBLIC_APP_ENV=staging|production — each deployment sets this one
+//      word instead of a full URL; mapped to the matching constant above.
+//   3. localhost:8000 — local dev, where neither is set.
+const DEFAULT_BACKEND_URL =
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  (process.env.NEXT_PUBLIC_APP_ENV === "staging"
+    ? STAGE_BACKEND_URL
+    : process.env.NEXT_PUBLIC_APP_ENV === "production"
+      ? PROD_BACKEND_URL
+      : "http://localhost:8000");
 const getBackendApiBaseUrl = (url: string) => {
   const trimmedUrl = url.replace(/\/$/, "");
   return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
@@ -102,18 +124,24 @@ export function AppProvider({ children }: { children: ReactNode }) {
   const [demoMode, setDemoMode] = useState(false);
   const [backendConnected, setBackendConnected] = useState(false);
   const [backendUrl, setBackendUrlState] = useState(DEFAULT_BACKEND_URL);
-  const setBackendUrl = (_value: string) => {
-    setBackendUrlState(DEFAULT_BACKEND_URL);
+  const setBackendUrl = (value: string) => {
+    setBackendUrlState(value);
   };
   const [isInitializing, setIsInitializing] = useState(true);
 
   // Keep browser requests same-origin so preview and production do not depend on
   // the backend allowing every deployment origin through CORS.
   const apiUrl = (path: string) => {
-    const cleanPath = path.replace(/^\/+|\/+$/g, "");
+    // Split off the query string first — the trailing slash Django's routes
+    // require belongs after the path, not after the query string. Appending
+    // it to the whole string (old behavior) turned "?async=1" into "?async=1/",
+    // silently corrupting the last query param's value.
+    const [rawPath, queryString] = path.split("?");
+    const cleanPath = rawPath.replace(/^\/+|\/+$/g, "");
     const apiBaseUrl = getBackendApiBaseUrl(backendUrl);
+    const base = `${apiBaseUrl}/${cleanPath}/`;
 
-    return `${apiBaseUrl}/${cleanPath}/`;
+    return queryString ? `${base}?${queryString}` : base;
   };
 
   // Return the token as well as storing it so callers can use it before React re-renders.
@@ -354,7 +382,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
         try {
           const errorData = JSON.parse(responseText);
           const payload = errorData.error ?? errorData;
-          requiresEmailVerification = Boolean(payload.requires_email_verification);
+          requiresEmailVerification = Boolean(
+            payload.requires_email_verification,
+          );
           emailForVerification = payload.email || emailForVerification;
           const detail = payload.details;
           const fieldMessage = detail
@@ -382,7 +412,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
 
       const data = await response.json();
       if (data.requires_otp) {
-        const error = new Error(data.message || "Enter the login code sent to your email.") as Error & {
+        const error = new Error(
+          data.message || "Enter the login code sent to your email.",
+        ) as Error & {
           requiresLoginOtp?: boolean;
         };
         error.requiresLoginOtp = true;
@@ -519,7 +551,9 @@ export function AppProvider({ children }: { children: ReactNode }) {
     if (!response.ok) {
       const errorData = await response.json().catch(() => ({}));
       throw new Error(
-        errorData.detail || errorData.password?.[0] || "Could not reset password.",
+        errorData.detail ||
+          errorData.password?.[0] ||
+          "Could not reset password.",
       );
     }
   };

@@ -9,6 +9,11 @@ import { Button } from "@/components/ui/button";
 
 const INACTIVITY_LIMIT_MS = 5 * 60 * 1000;
 const COUNTDOWN_WARNING_MS = 60 * 1000;
+// Activity events (pointermove, scroll, wheel...) can fire dozens of times a
+// second — resetting on every single one would re-render this whole layout
+// (and everything inside it) that often. A 5-minute timeout doesn't need
+// millisecond precision, so only actually reset at most this often.
+const ACTIVITY_RESET_THROTTLE_MS = 5_000;
 
 interface DashboardLayoutProps {
   children: ReactNode;
@@ -22,11 +27,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
   const [sessionDeadline, setSessionDeadline] = useState<number>(() => Date.now() + INACTIVITY_LIMIT_MS);
   const [remainingMs, setRemainingMs] = useState(INACTIVITY_LIMIT_MS);
   const isLoggingOutRef = useRef(false);
+  const lastResetAtRef = useRef(0);
 
   const resetInactivityTimer = useCallback(() => {
     setSessionDeadline(Date.now() + INACTIVITY_LIMIT_MS);
     setRemainingMs(INACTIVITY_LIMIT_MS);
   }, []);
+
+  // Throttled entry point for high-frequency DOM events — only calls the
+  // actual state-updating reset (and thus re-renders) at most once per
+  // ACTIVITY_RESET_THROTTLE_MS, regardless of how often the event fires.
+  const handleActivityEvent = useCallback(() => {
+    const now = Date.now();
+    if (now - lastResetAtRef.current < ACTIVITY_RESET_THROTTLE_MS) return;
+    lastResetAtRef.current = now;
+    resetInactivityTimer();
+  }, [resetInactivityTimer]);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -46,17 +62,18 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
       "wheel",
     ] as const;
 
+    lastResetAtRef.current = Date.now();
     resetInactivityTimer();
     activityEvents.forEach((event) => {
-      window.addEventListener(event, resetInactivityTimer, { passive: true });
+      window.addEventListener(event, handleActivityEvent, { passive: true });
     });
 
     return () => {
       activityEvents.forEach((event) => {
-        window.removeEventListener(event, resetInactivityTimer);
+        window.removeEventListener(event, handleActivityEvent);
       });
     };
-  }, [isAuthenticated, resetInactivityTimer]);
+  }, [isAuthenticated, resetInactivityTimer, handleActivityEvent]);
 
   useEffect(() => {
     if (!isAuthenticated) return;

@@ -1,4 +1,3 @@
-
 import { NextRequest } from "next/server";
 
 const backendUrl = "https://stage-invoicing.dimeconsultants.africa/api";
@@ -21,9 +20,12 @@ const HOP_BY_HOP_HEADERS = [
   "trailer",
 ];
 
-async function proxy(request: NextRequest, context: { params: Promise<{ path: string[] }> }) {
+async function proxy(
+  request: NextRequest,
+  context: { params: Promise<{ path: string[] }> },
+) {
   const { path } = await context.params;
-  const target = `${getBackendApiBaseUrl(backendUrl)}/${path.join("/")}/`;
+  const target = `${backendUrl.replace(/\/$/, "")}/api/${path.join("/")}/`;
   const headers = new Headers(request.headers);
   for (const h of HOP_BY_HOP_HEADERS) headers.delete(h);
 
@@ -32,7 +34,10 @@ async function proxy(request: NextRequest, context: { params: Promise<{ path: st
     response = await fetch(target, {
       method: request.method,
       headers,
-      body: request.method === "GET" || request.method === "HEAD" ? undefined : await request.arrayBuffer(),
+      body:
+        request.method === "GET" || request.method === "HEAD"
+          ? undefined
+          : await request.arrayBuffer(),
       redirect: "manual",
       signal: AbortSignal.timeout(8000),
     });
