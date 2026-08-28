@@ -4,6 +4,7 @@ declare const process: {
   env: {
     NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS?: string;
     NEXT_PUBLIC_BACKEND_URL?: string;
+    NODE_ENV?: string;
   };
 };
 
@@ -86,8 +87,16 @@ interface AppContextType {
 }
 
 const AppContext = createContext<AppContextType | undefined>(undefined);
+// NEXT_PUBLIC_BACKEND_URL is the source of truth for every deployment —
+// each backend's CORS only allows its own matching frontend origin, so a
+// wrong guess here doesn't degrade gracefully, it hard-fails via CORS.
+// Staging must always set this explicitly in its own .env rather than rely
+// on a guessed fallback; the only safe defaults are local dev and prod.
 const DEFAULT_BACKEND_URL =
-  process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000/api";
+  process.env.NEXT_PUBLIC_BACKEND_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "https://invoicing.dimeconsultants.africa/api"
+    : "http://localhost:8000");
 const getBackendApiBaseUrl = (url: string) => {
   const trimmedUrl = url.replace(/\/$/, "");
   return trimmedUrl.endsWith("/api") ? trimmedUrl : `${trimmedUrl}/api`;
