@@ -12,21 +12,44 @@ import {
 
 import type { ProcessingDataPoint } from "./dashboard-types";
 import { DashboardSection } from "./dashboard-section";
+import { cn } from "@/lib/utils";
+
+type ScrutinyPeriod = "month" | "quarter" | "year";
+
+const PERIOD_OPTIONS: { value: ScrutinyPeriod; label: string }[] = [
+  { value: "month", label: "Monthly" },
+  { value: "quarter", label: "Quarterly" },
+  { value: "year", label: "Yearly" },
+];
 
 interface ScrutinyChartProps {
   data: ProcessingDataPoint[];
+  period: ScrutinyPeriod;
+  onPeriodChange: (period: ScrutinyPeriod) => void;
 }
 
-export function ScrutinyChart({ data }: ScrutinyChartProps) {
+export function ScrutinyChart({ data, period, onPeriodChange }: ScrutinyChartProps) {
   return (
     <DashboardSection
       title="Scrutiny Revenue"
       className="lg:col-span-8"
       action={
         <div className="hidden rounded-md bg-muted p-0.5 text-xs text-muted-foreground sm:flex">
-          <span className="rounded bg-card px-2 py-1 text-foreground shadow-sm">Monthly</span>
-          <span className="px-2 py-1">Quarterly</span>
-          <span className="px-2 py-1">Yearly</span>
+          {PERIOD_OPTIONS.map((opt) => (
+            <button
+              key={opt.value}
+              type="button"
+              onClick={() => onPeriodChange(opt.value)}
+              className={cn(
+                "rounded px-2 py-1 transition-colors",
+                period === opt.value
+                  ? "bg-card text-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
       }
     >

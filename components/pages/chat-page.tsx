@@ -851,7 +851,12 @@ export function ChatPage() {
 
       current?.close();
 
-      const wsBase = backendUrl.replace(/^http/, "ws");
+      // backendUrl may or may not carry a trailing /api (it does on
+      // staging/prod, not in local dev) — Channels' websocket routes are
+      // mounted at the bare /ws/... path (see config/routing.py), never
+      // under /api/, so that suffix must always be stripped here regardless
+      // of which form backendUrl is currently in.
+      const wsBase = backendUrl.replace(/\/api\/?$/, "").replace(/^http/, "ws");
       const url = `${wsBase}/ws/chat/${convId}/?token=${encodeURIComponent(accessToken ?? "")}`;
       const socket = new WebSocket(url);
       wsRef.current = socket;

@@ -17,6 +17,9 @@ import {
   AlertCircle,
   Server,
   Loader2,
+  ChevronRight,
+  ChevronDown,
+  XCircle,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -32,6 +35,13 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { cn } from "@/lib/utils";
 import { useApp } from "@/contexts/app-context";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 import { BatchToolRunDialog } from "@/components/batch-tool-run-dialog";
 import { Wrench } from "lucide-react";
 import Link from "next/link";
@@ -55,6 +65,25 @@ interface FileListResponse {
   total: number;
   page: number;
   totalPages: number;
+}
+
+interface ToolCallItem {
+  id: number;
+  public_id: string;
+  tool: number;
+  tool_name: string;
+  tool_display: string;
+  job: number | null;
+  uploaded_file: string | null;
+  arguments: Record<string, unknown>;
+  result: { output_filename?: string; [key: string]: unknown } | null;
+  error_message: string;
+  status: "pending" | "running" | "success" | "error" | string;
+  status_display: string;
+  duration_ms: number | null;
+  started_at: string | null;
+  finished_at: string | null;
+  created_at: string;
 }
 
 const demoFiles: FileItem[] = [
@@ -155,6 +184,24 @@ function getStatusColor(status: string) {
   }
 }
 
+const REPORT_FORMATS = ["xlsx", "csv", "pdf", "json", "txt"] as const;
+
+function formatToolResult(result: ToolCallItem["result"]): string {
+  if (!result) return "";
+  // Some tools (e.g. flag_anomalies) nest their real payload as a JSON
+  // *string* inside result.result rather than a native object — parse it
+  // one level deep so it pretty-prints instead of showing escaped quotes.
+  const expanded: Record<string, unknown> = { ...result };
+  if (typeof expanded.result === "string") {
+    try {
+      expanded.result = JSON.parse(expanded.result);
+    } catch {
+      // not JSON — leave as the raw string
+    }
+  }
+  return JSON.stringify(expanded, null, 2);
+}
+
 function AwaitingBackendState() {
   return (
     <div className="flex flex-col items-center justify-center py-16 px-4">
@@ -185,8 +232,93 @@ export function UploadsPage() {
   const [filterType, setFilterType] = useState<string | null>(null);
   const [selectedFileIds, setSelectedFileIds] = useState<Set<string>>(new Set());
   const [showBatchToolDialog, setShowBatchToolDialog] = useState(false);
+  const [expandedFileIds, setExpandedFileIds] = useState<Set<string>>(new Set());
+  const [toolCallsByFile, setToolCallsByFile] = useState<Record<string, ToolCallItem[]>>({});
+  const [loadingToolCalls, setLoadingToolCalls] = useState<Set<string>>(new Set());
+  const [viewingCall, setViewingCall] = useState<ToolCallItem | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const showEmptyState = !demoMode && !backendConnected;
+
+  // Fetch (or refresh) one file's tool-call history.
+  const refetchToolCalls = useCallback(
+    async (fileId: string) => {
+      if (!apiFetch) return;
+      setLoadingToolCalls((prev) => new Set(prev).add(fileId));
+      try {
+        const res = await apiFetch(`tools/calls/?file=${fileId}`);
+        if (res.ok) {
+          const data = (await res.json()) as ToolCallItem[];
+          setToolCallsByFile((prev) => ({ ...prev, [fileId]: data }));
+        }
+      } catch (error) {
+        console.error("Failed to load tool calls:", error);
+      } finally {
+        setLoadingToolCalls((prev) => {
+          const next = new Set(prev);
+          next.delete(fileId);
+          return next;
+        });
+      }
+    },
+    [apiFetch],
+  );
+
+  const toggleExpand = (fileId: string) => {
+    setExpandedFileIds((prev) => {
+      const next = new Set(prev);
+      if (next.has(fileId)) {
+        next.delete(fileId);
+      } else {
+        next.add(fileId);
+        if (!toolCallsByFile[fileId]) refetchToolCalls(fileId);
+      }
+      return next;
+    });
+  };
+
+  // After a batch tool run: refresh currently-expanded rows in place, and
+  // drop cached entries for collapsed ones so they refetch fresh next time
+  // they're expanded — avoids visibly flickering a row the user didn't open.
+  const handleToolRunComplete = useCallback(
+    (fileIds: string[]) => {
+      for (const fileId of fileIds) {
+        if (expandedFileIds.has(fileId)) {
+          refetchToolCalls(fileId);
+        } else {
+          setToolCallsByFile((prev) => {
+            if (!(fileId in prev)) return prev;
+            const next = { ...prev };
+            delete next[fileId];
+            return next;
+          });
+        }
+      }
+    },
+    [expandedFileIds, refetchToolCalls],
+  );
+
+  const downloadToolReport = async (
+    toolCallId: number,
+    filetype: (typeof REPORT_FORMATS)[number],
+    toolLabel: string,
+  ) => {
+    if (!apiFetch) return;
+    try {
+      const res = await apiFetch(`tools/calls/${toolCallId}/report/?filetype=${filetype}`);
+      if (!res.ok) return;
+      const blob = await res.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `${toolLabel}.${filetype}`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    } catch (error) {
+      console.error("Download error:", error);
+    }
+  };
 
   // Load files from backend
   const loadFiles = useCallback(async () => {
@@ -534,11 +666,28 @@ export function UploadsPage() {
                 <div className="space-y-2">
                   {filteredFiles.map((file) => {
                     const FileIcon = getFileIcon(file.extension);
+                    const isExpanded = expandedFileIds.has(file.id);
+                    const isLoadingCalls = loadingToolCalls.has(file.id);
+                    const calls = toolCallsByFile[file.id];
                     return (
+                      <div key={file.id}>
                       <div
-                        key={file.id}
                         className="flex items-center gap-4 p-4 rounded-lg bg-muted/50 hover:bg-muted transition-colors group"
                       >
+                        {!demoMode && (
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 flex-shrink-0"
+                            onClick={() => toggleExpand(file.id)}
+                          >
+                            {isExpanded ? (
+                              <ChevronDown className="h-4 w-4" />
+                            ) : (
+                              <ChevronRight className="h-4 w-4" />
+                            )}
+                          </Button>
+                        )}
                         {!demoMode && (
                           <Checkbox
                             checked={selectedFileIds.has(file.id)}
@@ -629,6 +778,85 @@ export function UploadsPage() {
                           )}
                         </div>
                       </div>
+                      {isExpanded && (
+                        <div className="ml-12 mr-2 mb-2 rounded-lg border border-border bg-card p-3">
+                          {isLoadingCalls ? (
+                            <div className="flex items-center justify-center py-4">
+                              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                            </div>
+                          ) : !calls || calls.length === 0 ? (
+                            <p className="text-xs text-muted-foreground py-1">
+                              No tools have been run on this file yet.
+                            </p>
+                          ) : (
+                            <div className="space-y-2">
+                              {calls.map((call) => (
+                                <div
+                                  key={call.id}
+                                  className="flex items-center justify-between gap-2 rounded-md bg-muted/50 p-2.5 text-xs"
+                                >
+                                  <div className="min-w-0 flex items-center gap-2">
+                                    {call.status === "success" ? (
+                                      <CheckCircle2 className="h-3.5 w-3.5 text-primary flex-shrink-0" />
+                                    ) : call.status === "error" ? (
+                                      <XCircle className="h-3.5 w-3.5 text-destructive flex-shrink-0" />
+                                    ) : (
+                                      <Loader2 className="h-3.5 w-3.5 animate-spin text-muted-foreground flex-shrink-0" />
+                                    )}
+                                    <div className="min-w-0">
+                                      <div className="font-medium truncate">{call.tool_display || call.tool_name}</div>
+                                      <div className="text-muted-foreground truncate">
+                                        {new Date(call.created_at).toLocaleString()}
+                                      </div>
+                                    </div>
+                                  </div>
+                                  {call.status === "success" && (
+                                    <div className="flex items-center gap-1 flex-shrink-0">
+                                      <Button
+                                        size="sm"
+                                        variant="outline"
+                                        className="h-6 px-2"
+                                        onClick={() => setViewingCall(call)}
+                                      >
+                                        <Eye className="h-3 w-3" />
+                                      </Button>
+                                      <DropdownMenu>
+                                        <DropdownMenuTrigger asChild>
+                                          <Button size="sm" variant="outline" className="h-6 px-2">
+                                            <Download className="h-3 w-3" />
+                                          </Button>
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
+                                          {REPORT_FORMATS.map((fmt) => (
+                                            <DropdownMenuItem
+                                              key={fmt}
+                                              onClick={() =>
+                                                downloadToolReport(
+                                                  call.id,
+                                                  fmt,
+                                                  call.tool_display || call.tool_name,
+                                                )
+                                              }
+                                            >
+                                              Download as {fmt.toUpperCase()}
+                                            </DropdownMenuItem>
+                                          ))}
+                                        </DropdownMenuContent>
+                                      </DropdownMenu>
+                                    </div>
+                                  )}
+                                  {call.status === "error" && call.error_message && (
+                                    <span className="text-destructive truncate max-w-[16rem]" title={call.error_message}>
+                                      {call.error_message}
+                                    </span>
+                                  )}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      )}
+                      </div>
                     );
                   })}
                 </div>
@@ -665,7 +893,21 @@ export function UploadsPage() {
         open={showBatchToolDialog}
         onOpenChange={setShowBatchToolDialog}
         files={selectedFileRefs}
+        onToolRunComplete={handleToolRunComplete}
       />
+
+      <Dialog open={!!viewingCall} onOpenChange={(open) => !open && setViewingCall(null)}>
+        <DialogContent className="sm:max-w-2xl">
+          <DialogHeader>
+            <DialogTitle>{viewingCall?.tool_display || viewingCall?.tool_name}</DialogTitle>
+          </DialogHeader>
+          <ScrollArea className="max-h-[60vh]">
+            <pre className="whitespace-pre-wrap break-words text-xs bg-muted/50 rounded-md p-3">
+              {viewingCall ? formatToolResult(viewingCall.result) : ""}
+            </pre>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
