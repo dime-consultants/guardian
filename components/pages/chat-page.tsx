@@ -144,6 +144,36 @@ const formatFileSize = (bytes: number) => {
   return (bytes / (1024 * 1024)).toFixed(1) + " MB";
 };
 
+const formatToolName = (toolName: string) =>
+  toolName
+    .split("_")
+    .map((w) => w.charAt(0).toUpperCase() + w.slice(1))
+    .join(" ");
+
+// Present-continuous, user-facing action for each builtin tool (see
+// tools/management/commands/seed_tools.py for the canonical tool names) —
+// "Reconciling…" reads far better mid-turn than "Running Reconcile Datasets".
+// Anything not listed here (custom/user-defined tools included) falls back
+// to formatToolName() in toolActionLabel below.
+const TOOL_ACTION_LABELS: Record<string, string> = {
+  read_file: "Reading file",
+  detect_file_type: "Detecting file type",
+  extract_safaricom_bill: "Extracting Safaricom bill",
+  reconcile_ura_vs_acon: "Reconciling URA vs ACON",
+  write_xlsx: "Writing spreadsheet",
+  export_file: "Exporting file",
+  run_python: "Running custom code",
+  call_webhook: "Calling webhook",
+  extract_invoice_data: "Extracting invoice data",
+  flag_anomalies: "Flagging anomalies",
+  reconcile_datasets: "Reconciling datasets",
+  summarise_batch: "Summarising batch",
+  clean_dataset: "Cleaning dataset",
+};
+
+const toolActionLabel = (toolName: string) =>
+  TOOL_ACTION_LABELS[toolName] ?? `Running ${formatToolName(toolName)}`;
+
 const formatDate = (s: string) => {
   const d = new Date(s);
   const now = new Date();
@@ -328,6 +358,7 @@ export function ChatPage() {
   const [messages, setMessages] = useState<Message[]>([]);
   const [input, setInput] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [runningTool, setRunningTool] = useState<string | null>(null);
   const [pendingFiles, setPendingFiles] = useState<File[]>([]);
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [filteredConversations, setFilteredConversations] = useState<
@@ -876,19 +907,28 @@ export function ChatPage() {
         if (!pending) return;
 
         if (data.type === "done") {
+          setRunningTool(null);
           pending.resolve({
             id: data.messageId,
             attachments: data.attachments ?? [],
           });
         } else if (data.type === "error") {
+          setRunningTool(null);
           pending.reject(
             new Error(data.message || "The assistant turn failed."),
           );
         } else if (data.type === "cancelled") {
+          setRunningTool(null);
           pending.reject(new Error("Turn cancelled."));
+        } else if (data.type === "status") {
+          // Emitted once per tool the agent's tool-calling loop invokes
+          // (chat/notify.py::push_chat_status) — "running" names the tool
+          // that just started, "finished" clears it until the next one.
+          if (data.status === "running") setRunningTool(data.tool_name ?? null);
+          else if (data.status === "finished") setRunningTool(null);
         }
-        // "ack" / "processing" / "text" / "status" frames are progress
-        // updates, not resolution — keep waiting.
+        // "ack" / "processing" / "text" frames are progress updates too,
+        // just not ones this dialog needs — keep waiting.
       };
 
       socket.onerror = () => {
@@ -908,13 +948,24 @@ export function ChatPage() {
 
   useEffect(() => {
     if (conversationId) connectChatSocket(conversationId);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conversationId, backendConnected, demoMode]);
+
+  // Deliberately separate from the effect above: closing must only happen
+  // on an actual conversation switch or unmount, never as a side effect of
+  // backendConnected flapping (a transient /api/health/ timeout — common in
+  // this dev environment under SQLite lock contention — must not tear down
+  // an otherwise-live socket mid-turn. Channels' group_send doesn't queue
+  // for a disconnected client, so doing so silently drops in-flight
+  // "status"/"done" frames and the turn-status dialog gets stuck on
+  // "Thinking…" until the REST poll fallback eventually catches up).
+  useEffect(() => {
     return () => {
       wsRef.current?.close();
       wsRef.current = null;
       wsConversationIdRef.current = null;
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [conversationId, backendConnected, demoMode]);
+  }, [conversationId]);
 
   /**
    * Wait for the assistant's reply to a dispatched turn, primarily via the
@@ -1291,6 +1342,10 @@ export function ChatPage() {
       if (filesToSend.length > 0 && !isTimeout) setPendingFiles(filesToSend);
     } finally {
       setIsLoading(false);
+      // Safety net: if the socket dropped mid-turn and the REST poll
+      // fallback resolved it instead, no "finished" status frame ever
+      // arrived to clear this.
+      setRunningTool(null);
     }
   };
 
@@ -1935,8 +1990,11 @@ export function ChatPage() {
                 <div className="h-8 w-8 rounded-lg bg-primary/10 border border-primary/20 flex items-center justify-center flex-shrink-0">
                   <Bot className="h-4 w-4 text-primary" />
                 </div>
-                <div className="bg-card border border-border/50 rounded-xl p-3.5 shadow-sm">
+                <div className="bg-card border border-border/50 rounded-xl p-3.5 shadow-sm flex items-center gap-2">
                   <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                  <span className="text-sm text-muted-foreground">
+                    {runningTool ? `${toolActionLabel(runningTool)}…` : "Thinking…"}
+                  </span>
                 </div>
               </div>
             )}
