@@ -22,12 +22,15 @@ import { ScrutinyChart } from "./scrutiny-chart";
 import type { ActivityItem, MetricCardData, ProcessingDataPoint } from "./dashboard-types";
 import { buildIssueBreakdown, formatRelativeTime, iconForMetric } from "./dashboard-utils";
 
+type ScrutinyPeriod = "month" | "quarter" | "year";
+
 export function DashboardHome() {
   const { demoMode, backendConnected, backendUrl, apiFetch } = useApp();
   const [metrics, setMetrics] = useState<MetricCardData[]>([]);
   const [processingData, setProcessingData] = useState<ProcessingDataPoint[]>([]);
   const [recentActivity, setRecentActivity] = useState<ActivityItem[]>([]);
   const [isLoading, setIsLoading] = useState(false);
+  const [period, setPeriod] = useState<ScrutinyPeriod>("month");
 
   useEffect(() => {
     if (demoMode) {
@@ -60,7 +63,7 @@ export function DashboardHome() {
           }
         }
 
-        const processingRes = await apiFetch("dashboard/processing/");
+        const processingRes = await apiFetch(`dashboard/processing/?period=${period}`);
         if (processingRes.ok) {
           const processingJson = await processingRes.json();
           if (processingJson.data) setProcessingData(processingJson.data);
@@ -88,7 +91,7 @@ export function DashboardHome() {
     fetchDashboardData();
     const interval = setInterval(fetchDashboardData, 60000);
     return () => clearInterval(interval);
-  }, [apiFetch, backendConnected, backendUrl, demoMode]);
+  }, [apiFetch, backendConnected, backendUrl, demoMode, period]);
 
   const metricData = metrics.length ? metrics : demoMetrics;
   const chartData = processingData.length ? processingData : demoProcessingData;
@@ -122,7 +125,7 @@ export function DashboardHome() {
           </div>
 
           <div className="grid gap-4 lg:grid-cols-12">
-            <ScrutinyChart data={chartData} />
+            <ScrutinyChart data={chartData} period={period} onPeriodChange={setPeriod} />
             <IssueBreakdownCard data={issueBreakdown} />
           </div>
 

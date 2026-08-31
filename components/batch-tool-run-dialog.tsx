@@ -69,9 +69,10 @@ interface BatchToolRunDialogProps {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   files: FileRef[];
+  onToolRunComplete?: (fileIds: string[]) => void;
 }
 
-export function BatchToolRunDialog({ open, onOpenChange, files }: BatchToolRunDialogProps) {
+export function BatchToolRunDialog({ open, onOpenChange, files, onToolRunComplete }: BatchToolRunDialogProps) {
   const { apiFetch } = useApp();
   const [tools, setTools] = useState<MergedTool[]>([]);
   const [isLoadingTools, setIsLoadingTools] = useState(false);
@@ -223,6 +224,7 @@ export function BatchToolRunDialog({ open, onOpenChange, files }: BatchToolRunDi
 
     setIsRunning(false);
     toast.success("Batch run finished");
+    onToolRunComplete?.(files.map((f) => f.id));
   };
 
   const downloadOutput = async (toolCallId: number, filenameHint: string) => {
