@@ -8,9 +8,17 @@ import { Eye, EyeOff, HelpCircle, Loader2, ShieldCheck } from "lucide-react";
 import { AuthShell } from "@/components/auth/auth-shell";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp";
+import {
+  InputOTP,
+  InputOTPGroup,
+  InputOTPSlot,
+} from "@/components/ui/input-otp";
 import { Label } from "@/components/ui/label";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { useApp } from "@/contexts/app-context";
 
 export default function LoginPage() {
@@ -149,7 +157,9 @@ export default function LoginPage() {
             <ShieldCheck className="mt-0.5 size-4 text-primary" />
             <div className="space-y-1 text-[13px]">
               <p className="font-medium text-foreground">
-                {needsEmailVerification ? "Verify your email" : "Enter your login code"}
+                {needsEmailVerification
+                  ? "Verify your email"
+                  : "Enter your login code"}
               </p>
               <p className="text-muted-foreground">
                 Enter the one-time code for {email}.
@@ -171,9 +181,14 @@ export default function LoginPage() {
                 </TooltipContent>
               </Tooltip>
             </div>
-            <InputOTP maxLength={6} value={otp} onChange={setOtp} disabled={isLoading}>
+            <InputOTP
+              maxLength={5}
+              value={otp}
+              onChange={setOtp}
+              disabled={isLoading}
+            >
               <InputOTPGroup>
-                {Array.from({ length: 6 }).map((_, index) => (
+                {Array.from({ length: 5 }).map((_, index) => (
                   <InputOTPSlot key={index} index={index} />
                 ))}
               </InputOTPGroup>
@@ -187,7 +202,9 @@ export default function LoginPage() {
             className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
           >
             {isLoading ? <Loader2 className="size-4 animate-spin" /> : null}
-            {needsEmailVerification ? "Verify email and login" : "Verify OTP and login"}
+            {needsEmailVerification
+              ? "Verify email and login"
+              : "Verify OTP and login"}
           </Button>
           <Button
             type="button"
@@ -200,71 +217,74 @@ export default function LoginPage() {
           </Button>
         </div>
       ) : (
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-[12px] text-foreground">
-            Address email
-          </Label>
-          <Input
-            id="email"
-            type="email"
-            placeholder="name@company.com"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
-            disabled={isLoading}
-            className="auth-input h-10 rounded-lg border-border/80 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
-          />
-        </div>
-
-        <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-[12px] text-foreground">
-            Password
-          </Label>
-          <div className="relative">
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-1.5">
+            <Label htmlFor="email" className="text-[12px] text-foreground">
+              Address email
+            </Label>
             <Input
-              id="password"
-              type={showPassword ? "text" : "password"}
-              placeholder="Enter your password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              id="email"
+              type="email"
+              placeholder="name@company.com"
+              value={email}
+              onChange={(event) => setEmail(event.target.value)}
               disabled={isLoading}
-              className="auth-input h-10 rounded-lg border-border/80 pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+              className="auth-input h-10 rounded-lg border-border/80 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
             />
-            <button
-              type="button"
-              onClick={() => setShowPassword((value) => !value)}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-primary"
-              aria-label={showPassword ? "Hide password" : "Show password"}
-            >
-              {showPassword ? (
-                <EyeOff className="size-4" />
-              ) : (
-                <Eye className="size-4" />
-              )}
-            </button>
           </div>
-          <div className="text-right">
-            <Link href="/auth/reset-password" className="text-[12px] text-muted-foreground transition hover:text-primary">
-              Forgot password
-            </Link>
-          </div>
-        </div>
 
-        <Button
-          type="submit"
-          disabled={isLoading || !email || !password}
-          className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
-        >
-          {isLoading ? (
-            <>
-              <Loader2 className="size-4 animate-spin" />
-              Logging in...
-            </>
-          ) : (
-            "Login"
-          )}
-        </Button>
-      </form>
+          <div className="space-y-1.5">
+            <Label htmlFor="password" className="text-[12px] text-foreground">
+              Password
+            </Label>
+            <div className="relative">
+              <Input
+                id="password"
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                value={password}
+                onChange={(event) => setPassword(event.target.value)}
+                disabled={isLoading}
+                className="auth-input h-10 rounded-lg border-border/80 pr-10 text-[13px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:border-ring focus-visible:ring-ring/15"
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword((value) => !value)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground transition hover:text-primary"
+                aria-label={showPassword ? "Hide password" : "Show password"}
+              >
+                {showPassword ? (
+                  <EyeOff className="size-4" />
+                ) : (
+                  <Eye className="size-4" />
+                )}
+              </button>
+            </div>
+            <div className="text-right">
+              <Link
+                href="/auth/reset-password"
+                className="text-[12px] text-muted-foreground transition hover:text-primary"
+              >
+                Forgot password
+              </Link>
+            </div>
+          </div>
+
+          <Button
+            type="submit"
+            disabled={isLoading || !email || !password}
+            className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
+          >
+            {isLoading ? (
+              <>
+                <Loader2 className="size-4 animate-spin" />
+                Logging in...
+              </>
+            ) : (
+              "Login"
+            )}
+          </Button>
+        </form>
       )}
     </AuthShell>
   );
