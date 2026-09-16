@@ -340,6 +340,13 @@ const purgeDemoMsgs = (id: string) => {
 // routinely take 2+ minutes, past the old 120s budget here.
 const CHAT_TURN_TIMEOUT_MS = 360_000;
 const CHAT_POLL_INTERVAL_MS = 3_000;
+// Both the host and Docker nginx layers in front of this socket apply a
+// proxy_read_timeout to it (see deploy/host-nginx.conf, nginx/invoicing.conf)
+// that resets on ANY traffic in either direction. A turn can legitimately
+// sit idle longer than the shortest of those — sending a ping well under
+// that floor keeps the connection demonstrably alive instead of depending
+// on the server pushing a "status" frame often enough on its own.
+const WS_PING_INTERVAL_MS = 25_000;
 
 /** Thrown by waitForAssistantReply on the client-side patience budget
  * elapsing — distinct from a real failure so the UI can say "still
@@ -403,6 +410,7 @@ export function ChatPage() {
   const wsRef = useRef<WebSocket | null>(null);
   const wsConversationIdRef = useRef<string | null>(null);
   const pendingTurnsRef = useRef<Map<string, PendingTurn>>(new Map());
+  const wsPingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   useEffect(() => {
     conversationIdRef.current = conversationId;
@@ -893,6 +901,15 @@ export function ChatPage() {
       wsRef.current = socket;
       wsConversationIdRef.current = convId;
 
+      socket.onopen = () => {
+        if (wsPingIntervalRef.current) clearInterval(wsPingIntervalRef.current);
+        wsPingIntervalRef.current = setInterval(() => {
+          if (socket.readyState === WebSocket.OPEN) {
+            socket.send(JSON.stringify({ type: "ping" }));
+          }
+        }, WS_PING_INTERVAL_MS);
+      };
+
       socket.onmessage = (event) => {
         let data: any;
         try {
@@ -937,6 +954,10 @@ export function ChatPage() {
       };
 
       socket.onclose = () => {
+        if (wsPingIntervalRef.current) {
+          clearInterval(wsPingIntervalRef.current);
+          wsPingIntervalRef.current = null;
+        }
         if (wsRef.current === socket) {
           wsRef.current = null;
           wsConversationIdRef.current = null;
