@@ -182,13 +182,13 @@ export default function LoginPage() {
               </Tooltip>
             </div>
             <InputOTP
-              maxLength={5}
+              maxLength={6}
               value={otp}
               onChange={setOtp}
               disabled={isLoading}
             >
               <InputOTPGroup>
-                {Array.from({ length: 5 }).map((_, index) => (
+                {Array.from({ length: 6 }).map((_, index) => (
                   <InputOTPSlot key={index} index={index} />
                 ))}
               </InputOTPGroup>
@@ -197,7 +197,7 @@ export default function LoginPage() {
 
           <Button
             type="button"
-            disabled={isLoading || otp.length < 5}
+            disabled={isLoading || otp.length < 6}
             onClick={handleVerify}
             className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
           >

@@ -170,7 +170,7 @@ export default function SignupPage() {
           </div>
           <Button
             type="button"
-            disabled={isLoading || otp.length < 5}
+            disabled={isLoading || otp.length < 6}
             onClick={handleVerify}
             className="h-10 w-full rounded-lg bg-primary text-[13px] font-semibold text-primary-foreground shadow-sm hover:bg-primary/92"
           >
