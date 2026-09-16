@@ -10,36 +10,36 @@ on:
 jobs:
   build-and-trigger:
     runs-on: ubuntu-latest
+
     steps:
       - name: 1. Checkout Repository
         uses: actions/checkout@v4
-        
 
       - name: 2. Prepare Deployment Metadata
         id: prepare
         shell: bash
         run: |
-          # Determine deployment environment from branch
           if [[ "${{ github.ref_name }}" == "main" || "${{ github.ref_name }}" == "master" ]]; then
             ENV_NAME="prod"
             NODE_ENV="production"
             NEXT_PUBLIC_BACKEND_URL="https://invoicing.dimeconsultants.africa"
             NEXT_PUBLIC_ALLOWED_HOSTS="guardian.dimeconsultants.africa"
+
           elif [[ "${{ github.ref_name }}" == "develop" ]]; then
             ENV_NAME="stage"
             NODE_ENV="production"
             NEXT_PUBLIC_BACKEND_URL="https://stage-invoicing.dimeconsultants.africa"
             NEXT_PUBLIC_ALLOWED_HOSTS="stage-guardian.dimeconsultants.africa"
+
           else
-            echo "Error: unsupported branch '${{ github.ref_name }}'"
+            echo "Unsupported branch: ${{ github.ref_name }}"
             exit 1
           fi
 
           IMAGE_NAME="guardian"
           SHORT_SHA="${GITHUB_SHA::7}"
-          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/$IMAGE_NAME:${ENV_NAME}-${SHORT_SHA}"
+          IMAGE_TAG="${{ secrets.DOCKERHUB_USERNAME }}/${IMAGE_NAME}:${ENV_NAME}-${SHORT_SHA}"
 
-          # GitHub Actions outputs
           echo "env=$ENV_NAME" >> "$GITHUB_OUTPUT"
           echo "node_env=$NODE_ENV" >> "$GITHUB_OUTPUT"
           echo "image_tag=$IMAGE_TAG" >> "$GITHUB_OUTPUT"
@@ -53,36 +53,40 @@ jobs:
           echo "Backend URL: $NEXT_PUBLIC_BACKEND_URL"
           echo "Allowed hosts: $NEXT_PUBLIC_ALLOWED_HOSTS"
 
-      # 3. Login, build, and push Docker image
-      - name: 3. Build & Push Docker Image
-        shell: bash
-        env:
-          DOCKERHUB_USERNAME: ${{ secrets.DOCKERHUB_USERNAME }}
-          DOCKERHUB_TOKEN: ${{ secrets.DOCKERHUB_TOKEN }}
-          IMAGE_TAG: ${{ steps.prepare.outputs.image_tag }}
-        run: |
-          echo "$DOCKERHUB_TOKEN" | \
-            docker login \
-              -u "$DOCKERHUB_USERNAME" \
-              --password-stdin
+      - name: 3. Login to Docker Hub
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
 
-          docker build \
-            --platform linux/amd64 \
-            --build-arg NEXT_PUBLIC_BACKEND_URL="${{ steps.prepare.outputs.next_public_backend_url }}" \
-            --build-arg NEXT_PUBLIC_ALLOWED_HOSTS="${{ steps.prepare.outputs.next_public_allowed_hosts }}" \
-            --build-arg NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=false \
-            --build-arg NEXT_PUBLIC_DEFAULT_DEMO_MODE=false \
-            -t "$IMAGE_TAG" \
-            .
+      - name: 4. Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
 
-          docker push "$IMAGE_TAG"
+      - name: 5. Build and Push Docker Image
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          platforms: linux/amd64
+          push: true
 
-      # 4. Trigger infrastructure deployment
-      - name: 4. Trigger Infrastructure Deployment
+          tags: |
+            ${{ steps.prepare.outputs.image_tag }}
+
+          build-args: |
+            NODE_ENV=${{ steps.prepare.outputs.node_env }}
+            NEXT_PUBLIC_BACKEND_URL=${{ steps.prepare.outputs.next_public_backend_url }}
+            NEXT_PUBLIC_ALLOWED_HOSTS=${{ steps.prepare.outputs.next_public_allowed_hosts }}
+            NEXT_PUBLIC_USE_LOCALSTORAGE_TOKENS=false
+            NEXT_PUBLIC_DEFAULT_DEMO_MODE=false
+
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: 6. Trigger Infrastructure Deployment
         uses: peter-evans/repository-dispatch@v4
         with:
           token: ${{ secrets.INFRA_PAT }}
-          repository:  dime-consultants/infrastructure
+          repository: dime-consultants/infrastructure
           event-type: deploy-app
           client-payload: |
             {
